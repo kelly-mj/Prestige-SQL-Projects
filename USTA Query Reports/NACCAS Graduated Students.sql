@@ -1,4 +1,4 @@
--- Report: All withdrawn students in a specified date range
+-- Report: All graduated students in a specified date range
 -- Kelly MJ  |  9/6/2018
 -- 9/21/2018 Kelly MJ: Reformatted first two rows; corrected column order; uses attendance table to determine LDA
 
@@ -7,9 +7,9 @@ SELECT '<span style="font-size: 110%; padding: 3px 3px 3px 1px;"><strong>Date Ra
 	, CONCAT('<span style="font-size: 110%; padding: 3px;"><strong>', DATE_FORMAT('[?Start Date]', "%m/%d/%Y"), ' - ', DATE_FORMAT(CURDATE(), "%m/%d/%Y"), '</strong></span>') 'Student Name'
 	, NULL AS 'Program Name'
     , NULL AS 'Contract Start Date'
-    , NULL AS 'Withdrawal Date'
+    , NULL AS 'Graduation Date'
     , NULL AS 'Last Date of Attendance'
-    , NULL AS 'Actual Hours at<br>Time of Withdrawal'
+    , NULL AS 'Actual Hours at<br>Time of Graduation'
     , NULL AS '<div style="text-align: left">Scheduled<br>Program<br>Hours</div>'
 
 UNION	-- Count of students in list
@@ -28,7 +28,7 @@ FROM (
 	INNER JOIN Programmes P
 		ON P.programmeId = R.programmeId
 
-	WHERE S.isActive = 0
+	WHERE S.isActive = 3
 			AND S.<ADMINID>
 			AND S.firstName NOT LIKE '%test%'
 
@@ -44,7 +44,7 @@ SELECT t1.* FROM (
 		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS Name
 		, P.programmeName
 		, DATE_FORMAT(R.startDate, "%m/%d/%Y") 'Contract Start Date'
-		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Withdrawal Date'
+		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Graduation Date'
 		, COALESCE(DATE_FORMAT(DATE(CP.punchTime), "%m/%d/%Y"), DATE_FORMAT(MAX(A.attendanceDate), '%m/%d/%y'), 'N/A') 'LDA'
 		, COALESCE(ROUND(SUM(A.duration), 2), 'N/A') 'Actual Hours'
 		, CAST(P.minClockHours AS CHAR) 'Scheduled Hours'
@@ -71,7 +71,7 @@ SELECT t1.* FROM (
 	LEFT JOIN (SELECT userId, MAX(punchTime) AS punchTime FROM ClockPunches GROUP BY userId) CP
 		ON CP.userId = S.studentId
 
-	WHERE S.isActive = 0
+	WHERE S.isActive = 3
 			AND S.<ADMINID>
 			AND S.firstName NOT LIKE '%test%'
 

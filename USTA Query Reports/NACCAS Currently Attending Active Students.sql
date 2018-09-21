@@ -1,6 +1,5 @@
 -- Report: All Currently Attending (Active) Students - BPI
 -- Kelly MJ  |  9/6/2018
--- 9/21/2018 Kelly MJ: Reformatted header; corrected actual hours calculation
 
 -- Report Run Date
 SELECT NULL 'ID Number'

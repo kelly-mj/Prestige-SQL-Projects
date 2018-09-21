@@ -44,7 +44,7 @@ SELECT t1.* FROM (
 		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS Name
 		, P.programmeName
 		, DATE_FORMAT(R.startDate, "%m/%d/%Y") 'Contract Start Date'
-		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Withdrawal Date'
+		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Witdrawal Date'
 		, COALESCE(DATE_FORMAT(DATE(CP.punchTime), "%m/%d/%Y"), DATE_FORMAT(MAX(A.attendanceDate), '%m/%d/%y'), 'N/A') 'LDA'
 		, COALESCE(ROUND(SUM(A.duration), 2), 'N/A') 'Actual Hours'
 		, CAST(P.minClockHours AS CHAR) 'Scheduled Hours'
