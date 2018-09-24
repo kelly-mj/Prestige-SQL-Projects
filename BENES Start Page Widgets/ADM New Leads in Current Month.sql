@@ -1,6 +1,5 @@
 -- ADMIN Widget: New Leads in the Past Week
 -- Kelly MJ  |  09/10/2018
--- 9/24/18 Kelly MJ: Changed from past week to current month timeframe
 
 -- New Port Richey
 SELECT NULL 'Contact Name', NULL 'Stage', NULL 'Program of Interest'
@@ -33,11 +32,10 @@ FROM (
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
-		AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+		AND DATE(C.creationDtTm) >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
 		AND C.subAdminId NOT IN (SELECT subAdminId FROM SubAdmins WHERE campusCode IN (34601, 34606))
 
-	GROUP BY C.contactId
-	ORDER BY lastUpdate ASC) t1
+	GROUP BY C.contactId) t1
 
 UNION	-- Spring Hill
 SELECT NULL 'Contact Name', NULL 'Stage', NULL 'Program of Interest'
@@ -70,11 +68,10 @@ FROM (
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
-		AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+		AND DATE(C.creationDtTm) >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
 		AND C.subAdminId IN (SELECT subAdminId FROM SubAdmins WHERE campusCode = 34606)
 
-	GROUP BY C.contactId
-	ORDER BY lastUpdate ASC) t2
+	GROUP BY C.contactId) t2
 WHERE t2.Campus = 34606
 
 UNION	-- Brookesville
@@ -108,8 +105,7 @@ FROM (
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
-		AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+		AND DATE(C.creationDtTm) >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
 		AND C.subAdminId IN (SELECT subAdminId FROM SubAdmins WHERE campusCode = 34601)
 
-	GROUP BY C.contactId
-	ORDER BY lastUpdate ASC) t1
+	GROUP BY C.contactId) t1

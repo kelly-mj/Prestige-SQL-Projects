@@ -11,7 +11,9 @@ SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view
 FROM Admins A WHERE A.<ADMINID> UNION
 SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=102&type=spquery">Untyped Documents</a>'
 FROM Admins A WHERE A.<ADMINID> UNION
-SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=27&type=spquery">Active Student List for Financial Aid Start Pages    <---- MOVED WIDGET HERE</a>'
+SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=27&type=spquery">Active Student List for Financial Aid Start Pages</a>'
+FROM Admins A WHERE A.<ADMINID> UNION
+SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=108&type=spquery">LOA</a>'
 FROM Admins A WHERE A.<ADMINID> UNION
 SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=110&type=spquery">Students Missing Naccas Information</a>'
 FROM Admins A WHERE A.<ADMINID> UNION
