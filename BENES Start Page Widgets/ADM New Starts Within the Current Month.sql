@@ -1,10 +1,11 @@
 -- ADMIN (widget #230) New Start Students Within the Past Week
 -- Kelly MJ  |  9/10/2018
 -- Update Kelly MJ 9/14/2018: Added sort by campus
+-- Update Kelly MJ 9/24/2018: Changed date range from 'weekly' to 'since first day of the month'
 
 -- New Port Richey
 SELECT NULL AS 'idNumber', NULL AS 'Name', NULL AS 'Program Name' 
-	, '<tr style="text-align: left; background-color: #ADD8E6;"><td style="font-size: 125%; font-weight: bold;">New Port Richey</td><td></td><td></td><td></td></tr>' AS '<div style="margin-right: 15em;"">Count</div>'
+	, '<tr style="text-align: left; background-color: #ADD8E6;"><td style="font-size: 125%; font-weight: bold;">New Port Richey</td><td></td><td></td><td></td></tr>' AS '<div style="margin-right: 15em;"">Start Date</div>'
 
 UNION
 SELECT S.idNumber
@@ -23,7 +24,7 @@ LEFT JOIN Programmes P
 WHERE S.isActive = 1
 	AND R.isActive = 1
 	AND S.firstName NOT LIKE '%test%' AND S.lastName NOT LIKE '%test%'
-    AND R.startDate <= CURDATE() AND R.startDate >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
+    AND R.startDate <= CURDATE() AND R.startDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
     AND S.studentCampus = 34652
     AND S.<ADMINID>
 
@@ -48,7 +49,7 @@ LEFT JOIN Programmes P
 WHERE S.isActive = 1
 	AND R.isActive = 1
 	AND S.firstName NOT LIKE '%test%' AND S.lastName NOT LIKE '%test%'
-    AND R.startDate <= CURDATE() AND R.startDate >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
+    AND R.startDate <= CURDATE() AND R.startDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
     AND S.studentCampus = 34606
     AND S.<ADMINID>
 
@@ -73,6 +74,6 @@ LEFT JOIN Programmes P
 WHERE S.isActive = 1
 	AND R.isActive = 1
 	AND S.firstName NOT LIKE '%test%' AND S.lastName NOT LIKE '%test%'
-    AND R.startDate <= CURDATE() AND R.startDate >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
+    AND R.startDate <= CURDATE() AND R.startDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
     AND S.studentCampus = 34601
     AND S.<ADMINID>
