@@ -1,4 +1,4 @@
--- ADMIN Widget: Lead Type Counts
+-- ADMIN Widget: Leads per Stage
 -- Kelly MJ  |  09/10/2018 WITH HEADERS
 
 -- New Port Richey

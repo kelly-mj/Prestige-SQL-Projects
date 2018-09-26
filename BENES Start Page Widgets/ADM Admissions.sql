@@ -1,9 +1,10 @@
--- Current Enrolled Students for Monthly Billing
+-- ADM Admissions Widget
 -- Author: ??  | ??/??/????
 -- 9/10/18 Kelly Update: Added rows for Active Lead, Current LOA, Leads per month for past 3 months
+-- 9/24/18 Kelly MJ: Repurposed widget for lead listing, moved total enrolled count to 'Management Dashboard,' added several rows of lead information breakdown.
 
 -- Active Leads
-SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=231&type=spquery">Active Leads (link to leads per stage):</a>'
+SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=231&type=spquery">Active Leads (link to leads per stage):</a>' AS 'Type'
 	, COUNT(DISTINCT C.contactId) 'Count'
 FROM Contacts C
 WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049)
@@ -20,16 +21,16 @@ WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 
 
 
 UNION	-- Leads added since first day of month
-SELECT CONCAT('Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ': ')
+SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=234&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link): ')
 	, COUNT(C.contactId)
 FROM Contacts C
-WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049)
+WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049, 4000050)	-- including "Lost" leads
 	AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 	AND C.<ADMINID>
 
 
 UNION	-- Leads won/lost in current month
-SELECT CONCAT('Leads <strong><span style="color: green;">won</span>/<span style="color: red;">lost</span></strong> ', DATE_FORMAT(CURDATE(), '%M'), ': ')
+SELECT CONCAT('Leads <strong><span style="color: green;">won</span>/<span style="color: red;">lost</span></strong> in ', DATE_FORMAT(CURDATE(), '%M'), ': ')
 	, CONCAT('<strong><span style="color: green;">Won: ', t1.won, '  </span>/  <span style="color: red;">Lost: ', t2.lost, '</span></strong>')
 FROM (
 	SELECT COUNT(contactId) AS won
@@ -43,6 +44,16 @@ INNER JOIN (
 	WHERE C.contactTypeId = 4000050
 		AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 		AND C.<ADMINID>  ) t2
+
+
+UNION	-- Link to leads per stage
+SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=231&type=spquery">Leads per Stage (link)</a>' AS 'Type'
+	, NULL
+
+
+UNION	-- Link to leads per program
+SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=231&type=spquery">Leads per Program (link)</a>'
+	, NULL
 
 
 /*

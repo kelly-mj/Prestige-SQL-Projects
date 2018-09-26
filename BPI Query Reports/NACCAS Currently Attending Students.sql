@@ -20,6 +20,7 @@ FROM (
 	ON R.studentId = S.studentId
 	AND R.enrollmentSemesterId = 4000441
 	AND R.isActive = 1
+	AND R.startDate BETWEEN '[?Start Date]' AND '[?End Date]'
 
 	WHERE S.<ADMINID>
 	AND S.isActive IN (1, 12)  ) t1
@@ -44,7 +45,8 @@ FROM (
 	ON P.programmeId = R.programmeId
 
 	WHERE S.<ADMINID>
-	AND S.isActive IN (1, 12)  ) t1
+	AND S.isActive IN (1, 12)  
+	GROUP BY S.idNumber) t1
 GROUP BY t1.programmeId
 )
 
@@ -68,10 +70,11 @@ FROM (
 		, P.programmeName
 		, P.minClockHours
 	FROM Students S
-		INNER JOIN Registrations R
+	INNER JOIN Registrations R
 		ON R.studentId = S.studentId
 		AND R.enrollmentSemesterId = 4000441
 		AND R.isActive = 1
+		AND R.startDate BETWEEN '[?Start Date]' AND '[?End Date]'
 	INNER JOIN Programmes P
 		ON P.programmeId = R.programmeId
 	WHERE S.<ADMINID>

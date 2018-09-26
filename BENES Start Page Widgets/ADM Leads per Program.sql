@@ -1,22 +1,18 @@
--- ADMIN Widget: New Leads in the Current Month
--- Kelly MJ  |  09/10/2018
--- 9/24/18 Kelly MJ: Changed from past week to current month timeframe
+-- ADM Leads per Program Widget
+-- Kelly MJ  |  09/24/2018
 
 -- New Port Richey
-SELECT NULL 'Contact Name', NULL 'Stage', NULL 'Program of Interest'
-	, '<tr style="text-align: left; background-color: #ADD8E6;"><td style="font-size: 125%; font-weight: bold;">New Port Richey</td><td></td><td></td><td></td></tr>' AS 'Last Updated'
+SELECT NULL 'Program of Interest'
+	, '<tr style="text-align: left; background-color: #ADD8E6;"><td style="font-size: 125%; font-weight: bold;">New Port Richey</td><td></td><td></td><td></td></tr>' AS 'Count'
 
 UNION
-SELECT t1.name 'Contact Name'
-	, t1.type 'Stage'
-	, t1.program 'Program of Interest'
-	, t1.lastUpdate 'Last Updated'
+SELECT t1.program 'Program of Interest'
+	, t1.count
 FROM (
 	SELECT SA.campusCode AS campus
 		, CT.typeName AS type
 		, PFV.fieldValue AS program
-		, CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '"">', C.firstName, ' ', C.lastName, '</a>') AS name
-		, DATE(C.lastUpdateDtTm) AS lastUpdate
+		, COUNT(DISTINCT C.contactId) AS count
 
 	FROM Contacts C
 
@@ -33,12 +29,11 @@ FROM (
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
-		AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 		AND C.subAdminId NOT IN (SELECT subAdminId FROM SubAdmins WHERE campusCode IN (34601, 34606))
 
-	GROUP BY C.contactId
-	ORDER BY lastUpdate ASC) t1
-
+	GROUP BY program
+	ORDER BY program ASC) t1
+/*
 UNION	-- Spring Hill
 SELECT NULL 'Contact Name', NULL 'Stage', NULL 'Program of Interest'
 	, '<tr style="text-align: left; background-color: #ADD8E6;"><td style="font-size: 125%; font-weight: bold;">Spring Hill</td><td></td><td></td><td></td></tr>' AS 'Last Updated'
@@ -112,4 +107,4 @@ FROM (
 		AND C.subAdminId IN (SELECT subAdminId FROM SubAdmins WHERE campusCode = 34601)
 
 	GROUP BY C.contactId
-	ORDER BY lastUpdate ASC) t1
+	ORDER BY lastUpdate ASC) t1*/

@@ -24,6 +24,7 @@ FROM (
 	INNER JOIN Registrations R
 		ON R.studentId = S.studentId
 		AND R.graduationDate >= '[?Start Date]'
+		AND R.graduationDate <= '[?End Date]'
 
 	INNER JOIN Programmes P
 		ON P.programmeId = R.programmeId
@@ -54,6 +55,7 @@ SELECT t1.* FROM (
 	INNER JOIN Registrations R
 		ON R.studentId = S.studentId
 		AND R.graduationDate >= '[?Start Date]'
+		AND R.graduationDate <= '[?End Date]'
 
 	INNER JOIN Programmes P
 		ON P.programmeId = R.programmeId
