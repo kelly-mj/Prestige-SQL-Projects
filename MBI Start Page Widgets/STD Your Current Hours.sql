@@ -7,9 +7,9 @@
 
 -- Intern Clinic Hours
 (SELECT '<strong>Clinic Attendance:</strong>' AS ' '
-     , FORMAT(C.instructHour, 2) 'Hours Required'		-- Intern clinic hours scheduled
-     , FORMAT(SUM(A.duration),2) 'Hours Attended'    -- hours attended
-     , FORMAT(C.instructHour - SUM(A.duration), 2) 'Hours Remaining'
+     , CONCAT('<div style="text-align: center;">', FORMAT(C.instructHour, 2), '</div>') 'Hours Required'		-- Intern clinic hours scheduled
+     , CONCAT('<div style="text-align: center;">', FORMAT(SUM(A.duration),2), '</div>') 'Hours Attended'    -- hours attended
+     , CONCAT('<div style="text-align: center;">', FORMAT(C.instructHour - SUM(A.duration), 2), '</div>') 'Hours Remaining'
     
 FROM Registrations R
    
@@ -47,10 +47,10 @@ WHERE R.<ADMINID>
 GROUP BY R.registrationId)
 
 UNION	-- Massage Class Hours
-(SELECT '<strong>Class Attendance</strong>'
-	 , FORMAT(C.instructHour, 2) 'Hours Required'		-- Massage class hours scheduled
-     , FORMAT(SUM(A.duration),2) 'Hours Attended'    -- hours attended
-     , FORMAT(C.instructHour - SUM(A.duration), 2) 'Hours Remaining'
+(SELECT '<span style="text-align: center;"><strong>Class Attendance</strong></span>'
+	 , CONCAT('<div style="text-align: center;">', FORMAT(C.instructHour, 2), '</div>') 'Hours Required'		-- Massage class hours scheduled
+     , CONCAT('<div style="text-align: center;">', FORMAT(SUM(A.duration),2), '</div>') 'Hours Attended'    -- hours attended
+     , CONCAT('<div style="text-align: center;">', FORMAT(C.instructHour - SUM(A.duration), 2), '</div>') 'Hours Remaining'
     
 FROM Registrations R
    
@@ -90,9 +90,9 @@ GROUP BY R.registrationId)
 
 UNION -- Overall Hours
 (SELECT '<strong>Attendance Overall:</strong>' AS 'Category'
-     , FORMAT(P.minClockHours, 2) 'Hours Required'		-- Total hours scheduled
-	 , FORMAT(SUM(A.duration),2) 'Hours Attended'    -- hours attended
-     , FORMAT(P.minClockHours - SUM(A.duration) - R.transferUnits, 2) 'Hours Remaining'
+     , CONCAT('<div style="text-align: center;">', FORMAT(P.minClockHours, 2), '</div>') 'Hours Required'		-- Total hours scheduled
+	 , CONCAT('<div style="text-align: center;">', FORMAT(SUM(A.duration),2), '</div>') 'Hours Attended'    -- hours attended
+     , CONCAT('<div style="text-align: center;">', FORMAT(P.minClockHours - SUM(A.duration) - R.transferUnits, 2), '</div>') 'Hours Remaining'
     
 FROM Registrations R
    
