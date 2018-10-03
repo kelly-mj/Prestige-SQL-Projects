@@ -3,7 +3,7 @@
 -- Displays contact/payment/course information for students who enrolled during the user-entered date range
 
 SELECT
-	DISTINCT S.studentId AS 'Student ID'  , S.isActive-- change
+	DISTINCT S.idNumber AS 'Student ID'
 	, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS 'Student Name'
 	, S.email AS 'Email'
 	, CONCAT(S.address, ', ', S.city, ', ', S.state, ', ', S.zip) AS 'Mailing Address'
@@ -14,9 +14,9 @@ SELECT
 	, CONCAT('$', PTR.rate) AS 'Course Cost'
 	, NULL AS 'Amount of STRF Assessment'
 	, NULL AS 'Qtr Remitted to BPPE'
-	, CONCAT('<a href="https://bpi.orbundsis.com/einstein-freshair/admin_view_program_invoice.jsp?studentid=', S.studentId, '">Payment & Invoice</a>') AS 'Temporary' -- 'Third Party Payer Identifying Info'
+	, NULL AS 'Third Party Payer Identifying Info'
 	, CONCAT('$', FORMAT(COALESCE(CH.total, 0), 2)) AS 'Total Inst. Charges Charged'
-	, CONCAT('$', FORMAT(COALESCE(PD.total, 0), 2)) AS 'Total  Inst. Charges Paid'
+	, CONCAT('$', FORMAT(COALESCE(PAID.total, 0), 2)) AS 'Total  Inst. Charges Paid'
 
 FROM Students S
 
@@ -37,18 +37,20 @@ AND PTR.levelId = P.levelId
 LEFT JOIN (
 	SELECT studentId, SUM(amountPayable) AS total
     FROM OutstandingPayments
-    WHERE dueDate >= '2018-04-01' AND dueDate <= '2018-06-30'
+    WHERE dueDate >= '[?Start Date]' AND dueDate <= '[?End Date]'
     GROUP BY studentId) CH
 ON CH.studentId = S.studentId
 
--- sum of payments made by student in date range
+-- sum of payments made by students
 LEFT JOIN (
-	SELECT studentId, SUM(amountPaid) AS total
-    FROM OutstandingPayments
-    WHERE dueDate >= '2018-04-01' AND dueDate <= '2018-06-30'
-	GROUP BY studentId) PD
-ON PD.studentId = S.studentId
+	SELECT studentId, SUM(paymentAmount) AS total
+	FROM Payments
+	WHERE paymentDate >= '[?Start Date]' AND paymentDate <= '[?End Date]'
+	AND isActive = 1
+	GROUP BY studentId) PAID
+ON PAID.studentId = S.studentId
 
+-- OLD PAYMENT/CHARGE INFORMATION
 /*
 LEFT JOIN (
 	SELECT studentId, SUM(amount) AS totalCharges
@@ -69,3 +71,4 @@ LEFT JOIN (
 WHERE S.<ADMINID>
 -- AND S.isActive = 1
 GROUP BY S.studentId
+ORDER BY S.lastName
