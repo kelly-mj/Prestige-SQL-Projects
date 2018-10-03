@@ -127,3 +127,19 @@ WHERE R.<ADMINID>
 	AND R.studentId = [USERID]
   
 GROUP BY R.registrationId)
+
+UNION (	-- Massage count
+SELECT '<strong>Massages Completed:</strong>' AS 'Category'
+     , CONCAT('<div style="text-align: center;">50</div>') 'Hours Required'		-- Total hours scheduled
+	 , CONCAT('<div style="text-align: center;">', COALESCE(SUM(serviceUnit)/2, 0), '</div>') 'Hours Attended'    -- hours attended
+     , CONCAT('<div style="text-align: center;">', 50 - COALESCE(SUM(serviceUnit)/2, 0), '</div>') 'Hours Remaining'
+
+FROM Registrations R
+
+LEFT JOIN StudentService SS
+	ON SS.studentId = R.studentId
+
+WHERE SS.service LIKE 'M-Massages'
+AND SS.isActive = 1
+AND SS.<ADMINID>
+AND R.studentId = [USERID] )

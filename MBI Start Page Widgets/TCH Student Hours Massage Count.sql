@@ -1,3 +1,7 @@
+-- TCH Students Hours Massage Count Widget
+-- 10/2/18  |  Kelly MJ
+-- Lists the Theory, Clinic hours attended and massages completed for each student listed  in a teacher's class. Built for Mind Body Institute.
+
 SELECT C.className AS 'Class'
 	-- , S.idNumber AS 'Student ID'
 	, CONCAT('<a href="https://mbi.orbund.com/einstein-freshair/admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.firstName AS CHAR), ' ',   CAST(S.lastName AS CHAR), '</a>') 'Name'

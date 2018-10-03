@@ -14,9 +14,9 @@ SELECT
 	, CONCAT('$', PTR.rate) AS 'Course Cost'
 	, NULL AS 'Amount of STRF Assessment'
 	, NULL AS 'Qtr Remitted to BPPE'
-	, NULL AS 'Third Party Payer Identifying Info'
-	, CONCAT('$', FORMAT(COALESCE(BJ.totalCharges, 0), 2)) AS 'Total Inst. Charges Charged'
-	, CONCAT('$', FORMAT(COALESCE(PM.totalPayments, 0), 2)) AS 'Total  Inst. Charges Paid'
+	, CONCAT('<a href="https://bpi.orbundsis.com/einstein-freshair/admin_view_program_invoice.jsp?studentid=', S.studentId, '">Payment & Invoice</a>') AS 'Temporary' -- 'Third Party Payer Identifying Info'
+	, CONCAT('$', FORMAT(COALESCE(CH.total, 0), 2)) AS 'Total Inst. Charges Charged'
+	, CONCAT('$', FORMAT(COALESCE(PD.total, 0), 2)) AS 'Total  Inst. Charges Paid'
 
 FROM Students S
 
@@ -33,6 +33,23 @@ INNER JOIN ProgrammeLevelTuitionRates PTR
 ON PTR.programmeId = P.programmeId
 AND PTR.levelId = P.levelId
 
+-- sum of charges per student in date range
+LEFT JOIN (
+	SELECT studentId, SUM(amountPayable) AS total
+    FROM OutstandingPayments
+    WHERE dueDate >= '2018-04-01' AND dueDate <= '2018-06-30'
+    GROUP BY studentId) CH
+ON CH.studentId = S.studentId
+
+-- sum of payments made by student in date range
+LEFT JOIN (
+	SELECT studentId, SUM(amountPaid) AS total
+    FROM OutstandingPayments
+    WHERE dueDate >= '2018-04-01' AND dueDate <= '2018-06-30'
+	GROUP BY studentId) PD
+ON PD.studentId = S.studentId
+
+/*
 LEFT JOIN (
 	SELECT studentId, SUM(amount) AS totalCharges
 	FROM BillingJournal
@@ -48,7 +65,7 @@ LEFT JOIN (
 	AND paymentDate >= '[?Start Date]' AND paymentDate <= '[?End Date]'
 	GROUP BY studentId) PM
 	ON PM.studentId = S.studentId
-
+*/
 WHERE S.<ADMINID>
 -- AND S.isActive = 1
 GROUP BY S.studentId
