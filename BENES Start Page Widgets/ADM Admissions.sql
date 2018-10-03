@@ -35,7 +35,7 @@ SELECT CONCAT('Leads <strong><span style="color: green;">won</span>/<span style=
 FROM (
 	SELECT COUNT(contactId) AS won
 	FROM Contacts C
-	WHERE C.contactTypeId IN (4000046)		-- enrolled statud
+	WHERE C.contactTypeId IN (4000046)		-- enrolled status
 		AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 		AND C.<ADMINID>  ) t1
 INNER JOIN (
@@ -95,9 +95,9 @@ WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 
  ...44: 3. Mailed Catalog
  ...45: 5. Working
  ...46: 6. Enrolled
- ...47: 8. GAIN					- won
- ...48: 7. In-Financial			- won
- ...49: 9. Future Attend Date	- won
+ ...47: 8. GAIN
+ ...48: 7. In-Financial	
+ ...49: 9. Future Attend Date
  ...50: 86. Lost - Not Interested
  ...51: 4. Made Appointment
 */
