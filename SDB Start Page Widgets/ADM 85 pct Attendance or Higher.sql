@@ -20,8 +20,21 @@ INNER JOIN (
 	FROM Attendance) A
     ON A.attendanceDate <= R.endDate AND A.attendanceDate >= R.startDate
     AND A.attendanceDate <= C.endDate AND A.attendanceDate >= C.startDate
-    AND A.attendanceDate <= '2018-06-01'
     AND A.DOW IN (SELECT 1+CS.dayNum FROM ClassSchedules CS WHERE CS.classId = CSR.classId)
     
 WHERE R.studentId = 316
 ORDER BY A.attendanceDate ASC
+
+
+SELECT DISTINCT C.classId, C.className
+	, S.studentId, CONCAT(S.firstName, ' ', S.lastName)
+
+FROM Classes C
+
+INNER JOIN ClassStudentReltn CSR
+	ON CSR.classId = C.classId
+
+INNER JOIN Students S
+	ON S.studentId = CSR.studentId
+
+GROUP BY C.classId

@@ -1,89 +1,120 @@
--- Staff Hours
+-- Written by Andrew
+-- Edited by Kelly MJ
+-- Last Updated: 6/6/2018
+-- Changed hours total from hour:minute to decimal format
+-- Now only sums up 1 duration value per employee per day to obtain weekly hours - this avoids counting double punches.
+-- Added column to display Vacation/Illness reasons
 
-SELECT t1.Name 'Staff Name' -- staff name
-	, t1.attendanceDate 'Attendance Date' -- date
-	, t1.duration AS 'Hours' -- hours
+SELECT t1.TeacherID, t1.Name AS 'Staff Member Name',
+  
+    CASE WHEN t1.Campus_Code = '34652' THEN 'New Port Richey'
+     WHEN t1.Campus_Code = '34606' THEN 'Spring Hill'
+         WHEN t1.Campus_Code = '34601' THEN 'BrooksVille'
+     ELSE ''
+         END AS 'Staff Campus',
+         
+t1.DOW AS 'Day Of The Week',t1.ATDate AS 'Attendance Date',
+
+CASE WHEN t1.reasonType > 0 
+          THEN CASE WHEN t1.reasonType = 1 THEN IF (t1.reasonText > 'a', t1.reasonText, 'Illness')
+                    WHEN t1.reasonType = 6 THEN IF (t1.reasonText > 'a', t1.reasonText, 'Vacation')
+                    ELSE 'No reason text provided'
+               END
+     WHEN t1.reasonType < 1 AND t1.reasonText > 'a'
+          THEN t1.reasonText
+         -- THEN IF (t1.reasonText > 'a', t1.reasonText, '<a href="post_attendance_for_staff.jsp?semesterid=4000441&adate=05.28.2018">REASON MISSING - FILL IN</a>')
+     ELSE NULL
+     END AS 'Reason for Absence',
+ 
+CONCAT('<div style="text-align: right;">',FLOOR(t1.duration),'.', LPAD(ROUND((t1.duration- FLOOR(t1.duration)) * 100)% 100,2,0),'</div>') AS Duration
+ 
+FROM
+      (SELECT T.teacherID AS TeacherID
+        , CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
+        , TA.attendanceDate AS ATdate
+        , MAX(duration) AS duration
+        , T.campusCode AS Campus_Code
+        , DAYNAME(TA.attendanceDate) AS DOW
+        , MAX(TA.teacherAttendanceId)
+        , TA.reasonType
+        , TA.reasonText
+       FROM TeacherAttendance TA
+       INNER JOIN Teachers T 
+           ON TA.teacherID = T.teacherID
+       WHERE DATE(TA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
+         AND TA.isactive = 1
+         and T.isactive = 1  
+         AND (duration > 0 OR TA.reasonType > 0 OR TA.reasonText > 'a')
+         AND T.<ADMINID>
+         AND T.CampusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}] 
+       GROUP BY T.teacherID, TA.attendancedate  
+UNION
+       SELECT SA.SubadminID AS TeacherID
+       , CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
+       , SAA.attendanceDate AS ATdate
+       , MAX(duration) AS duration
+       , SA.campusCode AS Campus_Code
+       , DAYNAME(SAA.attendanceDate) AS DOW
+       , MAX(SAA.subAdminAttendanceId)
+       , SAA.reasonType
+       , SAA.reasonText
+       FROM SubAdminAttendance SAA
+       INNER JOIN SubAdmins SA 
+       ON SA.SubAdminID = SAA.SubAdminID
+       WHERE DATE(SAA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
+         AND SAA.isactive = 1 
+         and SA.isactive = 1 
+         AND (duration > 0 OR SAA.reasonType > 0 OR SAA.reasonText > 'a') 
+         AND SA.<ADMINID> 
+         AND SA.CampusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}] 
+         GROUP BY SA.subAdminID, SAA.attendanceDate
+             ) AS t1   
+UNION  
+SELECT t3.TeacherID, NULL,NULL, NULL,  t3.n3, t3.n4, 
+CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','',
+CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; background-color: #A8D0E6; font-weight: bold;">','<div align="right">'
+,t3.Name,"'s" '  Weekly Hours Are','  ', FLOOR(SUM(t3.duration)),'.', LPAD(ROUND((SUM(t3.duration)- FLOOR(SUM(t3.duration))) * 100)% 100,2,0),
+CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','','','</td></tr></font></div>')))
 
 FROM (
-	-- Teacher information
-	SELECT T.teacherId
-		, CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
-		, T.campusCode AS campusCode
-		, TA.teacherAttendanceId AS attendanceId
-		, TA.attendanceDate AS attendanceDate
-		, MAX(TA.duration) AS duration
-	FROM Teachers T
-	INNER JOIN TeacherAttendance TA
-		ON TA.teacherId = T.teacherId
-		AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
-		AND TA.isActive = 1
-		AND TA.duration > 0
-	WHERE T.<ADMINID>
-		AND T.isActive = 1
-		AND T.campusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}]
-	-- Subadmin information
-	UNION
-	SELECT SA.subAdminId
-		, CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
-		, SA.campusCode AS campusCode
-		, SAA.subAdminAttendanceId AS attendanceId
-		, SAA.attendanceDate AS attendanceDate
-		, MAX(SAA.duration) AS duration
-	FROM SubAdmins SA
-	INNER JOIN SubAdminAttendance SAA
-		ON SAA.subAdminId = SA.subAdminId
-		AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
-		AND SAA.isActive = 1
-		AND SAA.duration > 0
-	WHERE SAA.<ADMINID>
-		AND SA.isActive = 1
-		AND SA.campusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}]
-	GROUP BY attendanceId
-	ORDER BY attendanceDate ASC
-) t1
+    SELECT T.teacherID AS TeacherID
+        , CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
+        , TA.attendanceDate AS ATdate
+        , MAX(duration) AS duration
+        , T.campusCode AS Campus_Code
+        , MAX(TA.teacherAttendanceId)
+        , NULL AS n3
+        , NULL AS n4
+       FROM TeacherAttendance TA
+       INNER JOIN Teachers T 
+           ON TA.teacherID = T.teacherID
+       WHERE DATE(TA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
+         AND TA.isactive = 1
+         and T.isactive = 1  
+         AND (duration > 0 OR TA.reasonType > 0)
+         AND T.<ADMINID>
+         AND T.CampusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}] 
+       GROUP BY T.teacherID, TA.attendancedate  
+UNION
+       SELECT SA.SubadminID AS TeacherID
+       , CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
+       , SAA.attendanceDate AS ATdate
+       , MAX(duration) AS duration
+       , SA.campusCode AS Campus_Code
+       , MAX(SAA.subAdminAttendanceId)
+       , NULL AS n3
+       , NULL AS n4
+       FROM SubAdminAttendance SAA
+       INNER JOIN SubAdmins SA 
+       ON SA.SubAdminID = SAA.SubAdminID
+       WHERE DATE(SAA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
+         AND SAA.isactive = 1 
+         and SA.isactive = 1 
+         AND (duration > 0 OR SAA.reasonType > 0) 
+         AND SA.<ADMINID> 
+         AND SA.CampusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}] 
+         GROUP BY SA.subADminID, SAA.attendanceDate
+             ) AS t3   
 
--- FLOOR(SUM(t3.duration)),'.', LPAD(ROUND((SUM(t3.duration)- FLOOR(SUM(t3.duration))) * 100)% 100,2,0)
-
-UNION	-- weekly hours
-SELECT 'Total Hours: '
-	, NULL
-	, SUM(t2.duration) -- weekly hours total
-FROM (
-	-- Teacher information
-	SELECT T.teacherId
-		, CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
-		, T.campusCode AS campusCode
-		, TA.teacherAttendanceId AS attendanceId
-		, TA.attendanceDate AS attendanceDate
-		, MAX(TA.duration) AS duration
-	FROM Teachers T
-	INNER JOIN TeacherAttendance TA
-		ON TA.teacherId = T.teacherId
-		AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
-		AND TA.isActive = 1
-		AND TA.duration > 0
-	WHERE T.<ADMINID>
-		AND T.isActive = 1
-		AND T.campusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}]
-	-- Subadmin information
-	UNION
-	SELECT SA.subAdminId
-		, CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
-		, SA.campusCode AS campusCode
-		, SAA.subAdminAttendanceId AS attendanceId
-		, SAA.attendanceDate AS attendanceDate
-		, MAX(SAA.duration) AS duration
-	FROM SubAdmins SA
-	INNER JOIN SubAdminAttendance SAA
-		ON SAA.subAdminId = SA.subAdminId
-		AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
-		AND SAA.isActive = 1
-		AND SAA.duration > 0
-	WHERE SAA.<ADMINID>
-		AND SA.isActive = 1
-		AND SA.campusCode = [?Campus{34652|New Port Richey|34606|Spring Hill|34601|BrooksVille}]
-	GROUP BY attendanceId
-) t2
-GROUP BY t2.Name
-
-ORDER BY Name
+GROUP BY TeacherID
+ORDER BY TeacherID 
