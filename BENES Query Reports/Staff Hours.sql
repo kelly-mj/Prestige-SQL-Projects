@@ -2,7 +2,7 @@
 -- 6/6/2018 Kelly MJ: Changed hours total from hour:minute to decimal format
 -- 6/6/2018 Kelly MJ: Now only sums up 1 duration value per employee per day to obtain weekly hours - this avoids counting double punches.
 -- 6/6/2018 Kelly MJ: Added column to display Vacation/Illness reasons
--- 10/10/2018 K   MJ: Removed HTML formatting to make .csv exported file cleaner. Removec "Campus" and "Day of Week" columns.
+-- 10/10/2018 K   MJ: Removed HTML formatting to make .csv exported file cleaner. Removed "Campus" and "Day of Week" columns.
 
 SELECT t1.TeacherID
 	, t1.Name AS 'Staff Member Name'
