@@ -8,15 +8,6 @@ SELECT CAST(t1.idNumber AS CHAR) 'Student ID'
 	, t1.className 'Class'
 	, FORMAT(t1.attHours, 2) 'Hours Attended' 
 
--- NEXT COLULMNS ARE FOR TESTING PURPOSES
--- First column displays student's attendance hours, program id, and whether their attendance hours are within the second disbursement hours range. Second column links to attendance report and displays supposed class duration.
-/* , CONCAT(P.programmeId, '  ', CASE P.programmeId
-	WHEN 1 THEN IF(SUM(A.duration) BETWEEN 375 AND 450, 'ELIGIBLE', ' ')
-	WHEN 2 THEN IF(SUM(A.duration) BETWEEN 325 AND 375, 'ELIGIBLE', ' ')
-	WHEN 3 THEN IF(SUM(A.duration) BETWEEN 375 AND 450, 'ELIGIBLE', ' ')
-   END, '  ', PFV.fieldValue) 'ELIGIBLE?'
-, CONCAT(C.className, '(', CAST(C.classId AS CHAR), ')&nbsp;&nbsp;&nbsp;&nbsp;<a target="_blank" href="https://usta.orbund.com/einstein-freshair/custom/benes/reports/attendance_history_report.jsp?userId=', CAST(S.studentId AS CHAR), '&userType=1">', CAST(C.lessonDuration AS CHAR), '</a>') 'Class' */
-
 FROM (
 	SELECT R.studentId
 		, R.programmeId
@@ -62,14 +53,6 @@ FROM (
 	GROUP BY R.studentId
 	) t1
 
--- Following join is for the purpose of adding up scheduled hours
-/*INNER JOIN (
-	SELECT DISTINCT attendanceDate, DAYOFWEEK(attendanceDate) AS DOW
-	FROM Attendance) A
-    ON A.attendanceDate <= R.endDate AND A.attendanceDate >= R.startDate
-    AND A.attendanceDate <= C.endDate AND A.attendanceDate >= C.startDate
-    AND A.DOW IN (SELECT 1+CS.dayNum FROM ClassSchedules CS WHERE CS.classId = CSR.classId)*/
-    
 WHERE CASE t1.programmeId
 		WHEN 1 THEN t1.attHours BETWEEN 375 AND 450
 		WHEN 2 THEN t1.attHours BETWEEN 325 AND 375
