@@ -3,8 +3,8 @@
 -- 10/15/18 Kelly MJ: Refactored code, improved calculation for total hours attended
 
 SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(t1.studentId AS CHAR), '">', t1.studentName, '</a>') AS 'Name'
-	, t1.programmeName 'Enrolled Program',
-	, t1.attHours 'Hours Attended'
+	, t1.programmeName 'Enrolled Program'
+	, FORMAT(t1.attHours, 2) 'Hours Attended'
 	-- , t1.fieldValue 'Financial Aid Assessment?'
 
 FROM (
