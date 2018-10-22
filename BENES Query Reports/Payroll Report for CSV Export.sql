@@ -1,11 +1,11 @@
 -- Payroll Report for CSV Export
 -- 10/17/18 Kelly MJ
 
-(SELECT t1.name AS name, t1.employeeId 'Employee ID'
+(SELECT t1.employeeId AS employeeId		-- DELETE 'name'
 	, t1.chargeDate 'Charge Date'
     , t1.payCode 'Paycode'	-- leave blank if nah
-    , t1.hours 'Hours'	-- coalesce to zero
-    , t1.employeeType 'Employee Type'
+    , FORMAT(COALESCE(IF((t1.hours >= 40 OR t1.employeeType LIKE '%Salary%'), 40, t1.hours), 0), 2) 'Hours'	-- coalesce to zero
+    , t1.employeeType AS employeeType -- 'Employee Type'
     
 FROM (
 	-- Subadmins
@@ -13,34 +13,98 @@ FROM (
         , SUM(SAA.duration) hours
         , EID.fieldValue AS employeeId
         , TYPE.fieldValue AS employeeType
-        , '2018-08-12' AS chargeDate
+        , '[?Start Date]' AS dummyDate		-- Included this column to have the Start Date field appear before the End Date field when running the report
+        , '[?End Date]' AS chargeDate
         , 'Regular' AS payCode
-        , CONCAT(SA.firstName, ' ' , SA.lastName, ' (', SA.subAdminId, ')') AS name
+        , CONCAT(SA.firstName, ' ' , SA.lastName, ' (', CAST(SA.subAdminId AS CHAR), ')') AS name
 	FROM SubAdmins SA
     LEFT JOIN SubAdminAttendance SAA ON SAA.subAdminId = SA.subAdminId
-        AND SAA.attendanceDate BETWEEN '2018-08-06' AND '2018-08-12'
-	LEFT JOIN ProfileFieldValues EID ON EID.userId = SA.subAdminId
-		AND EID.fieldName = 'EMPLOYEE_ID'
-	LEFT JOIN ProfileFieldValues TYPE ON TYPE.userId = SA.subAdminId
-		AND TYPE.fieldName = 'EMPLOYEE_TYPE'
+        AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
+	LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        ) EID ON EID.userId = SA.subAdminId
+	LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
+        ) TYPE ON TYPE.userId = SA.subAdminId
 	WHERE SA.isActive = 1
+    AND SA.<ADMINID>
     GROUP BY SA.subAdminId)
-	-- Teachers
-    UNION
+
+    UNION	-- Teachers
     (SELECT T.teacherId AS id
         , SUM(TA.duration) hours
         , EID.fieldValue AS employeeId
         , TYPE.fieldValue AS employeeType
-        , '2018-08-12' AS chargeDate
+        , NULL
+        , '[?End Date]' AS chargeDate
         , 'Regular' AS payCode
-        , CONCAT(T.firstName, ' ' , T.lastName, ' (', T.teacherId, ') TEACHER') AS name
+        , CONCAT(T.firstName, ' ' , T.lastName, ' (', CAST(T.teacherId AS CHAR), ') TEACHER') AS name
 	FROM Teachers T
     LEFT JOIN TeacherAttendance TA ON TA.teacherId = T.teacherId
-        AND TA.attendanceDate BETWEEN '2018-08-06' AND '2018-08-12'
-	LEFT JOIN ProfileFieldValues EID ON EID.userId = T.teacherId
-		AND EID.fieldName = 'EMPLOYEE_ID'
-	LEFT JOIN ProfileFieldValues TYPE ON TYPE.userId = T.teacherId
-		AND TYPE.fieldName = 'EMPLOYEE_TYPE'
+        AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
+	LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        ) EID ON EID.userId = T.teacherId
+	LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
+        ) TYPE ON TYPE.userId = T.teacherId
 	WHERE T.isActive = 1
+    AND T.<ADMINID>
     GROUP BY T.teacherId)
-    ) t1)
+    ) t1
+    WHERE t1.employeeId > '0')
+
+UNION	-- OT
+(SELECT t1.employeeId AS employeeId		-- DELETE 'name'
+	, t1.chargeDate 'Charge Date'
+    , t1.payCode 'Paycode'	-- leave blank if nah
+    , FORMAT(t1.hours-40, 2) 'Hours'	-- coalesce to zero
+    , t1.employeeType AS employeeType -- 'Employee Type'
+    
+FROM (
+	-- Subadmins
+    (SELECT SA.subAdminId AS id
+        , SUM(SAA.duration) hours
+        , EID.fieldValue AS employeeId
+        , TYPE.fieldValue AS employeeType
+        , '[?End Date]' AS chargeDate
+        , 'OT' AS payCode
+        , CONCAT(SA.firstName, ' ' , SA.lastName, ' (', CAST(SA.subAdminId AS CHAR), ')') AS name
+	FROM SubAdmins SA
+    LEFT JOIN SubAdminAttendance SAA ON SAA.subAdminId = SA.subAdminId
+        AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
+	LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        ) EID ON EID.userId = SA.subAdminId
+    LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
+        ) TYPE ON TYPE.userId = SA.subAdminId
+	WHERE SA.isActive = 1
+    AND SA.<ADMINID>
+    GROUP BY SA.subAdminId)
+
+    UNION	-- Teachers
+    (SELECT T.teacherId AS id
+        , SUM(TA.duration) hours
+        , EID.fieldValue AS employeeId
+        , TYPE.fieldValue AS employeeType
+        , '[?End Date]' AS chargeDate
+        , 'OT' AS payCode
+        , CONCAT(T.firstName, ' ' , T.lastName, ' (', CAST(T.teacherId AS CHAR), ') TEACHER') AS name
+	FROM Teachers T
+    LEFT JOIN TeacherAttendance TA ON TA.teacherId = T.teacherId
+        AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
+	LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        ) EID ON EID.userId = T.teacherId
+    LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
+        ) TYPE ON TYPE.userId = T.teacherId
+	WHERE T.isActive = 1
+    AND T.<ADMINID>
+    GROUP BY T.teacherId)
+    ) t1
+    WHERE t1.employeeId > '0'
+    AND t1.hours > 40)
+
+ORDER BY employeeType, employeeId
