@@ -1,4 +1,4 @@
--- BBA ADMIN (widget #230) New Start Students Within the Past Week
+-- BBA ADMIN (widget #230) New Start Students in the Current Month
 -- Kelly MJ  |  10/28/2018
 
 SELECT S.idNumber

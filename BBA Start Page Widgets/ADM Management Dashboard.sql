@@ -34,8 +34,8 @@ WHERE S.isActive = 1
 
 
 UNION	-- New Starts in the current month
-SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR), '&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>') AS 'Student Type'
-	, COUNT(DISTINCT S.idNumber)
+SELECT COALESCE(CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR), '&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>'), CONCAT('New starts in ', DATE_FORMAT(CURDATE(), '%M:'))) AS 'Student Type'
+	, COALESCE(COUNT(DISTINCT S.idNumber), 0)
     
 FROM Students S
 INNER JOIN Registrations R

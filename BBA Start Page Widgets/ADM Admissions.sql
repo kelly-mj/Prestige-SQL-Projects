@@ -21,8 +21,8 @@ WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 
 */
 
 UNION	-- Leads added since first day of months
-SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link):</a>')
-	, COUNT(C.contactId)
+SELECT COALESCE(CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link):</a>'), CONCAT('Leads added in ', DATE_FORMAT(CURDATE(), '%M:')))
+	, COALESCE(COUNT(C.contactId), 0)
 FROM Contacts C
 LEFT JOIN CustomStartPageQueries Q
 	ON Q.adminid = C.adminid AND Q.userType = 4 AND Q.queryTitle = 'New Leads in the Current Month'
@@ -33,7 +33,7 @@ WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 
 
 UNION	-- Leads won/lost in current month
 SELECT CONCAT('Leads <strong><span style="color: green;">won</span>/<span style="color: red;">lost</span></strong> in ', DATE_FORMAT(CURDATE(), '%M'), ': ')
-	, CONCAT('<strong><span style="color: green;">Won: ', t1.won, '  </span>/  <span style="color: red;">Lost: ', t2.lost, '</span></strong>')
+	, CONCAT('<strong><span style="color: green;">Won: ', COALESCE(t1.won, 0), '  </span>/  <span style="color: red;">Lost: ', COALESCE(t2.lost, 0), '</span></strong>')
 FROM (
 	SELECT COUNT(contactId) AS won
 	FROM Contacts C
@@ -51,7 +51,7 @@ INNER JOIN (
 UNION	-- Link to leads per stage
 SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
 	, NULL
-FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Stage'
+FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads by Stage'
 
 
 /***** STILL NEEDS TO BE WRITTEN *****/

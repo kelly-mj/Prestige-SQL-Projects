@@ -19,7 +19,7 @@ FROM (
 
 	LEFT JOIN ProfileFieldValues PFV
 		ON PFV.userId = C.contactId
-		AND PFV.fieldName = 'PROGRAM_OF_INTEREST'
+		AND PFV.fieldName = 'PROGRAM'
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
