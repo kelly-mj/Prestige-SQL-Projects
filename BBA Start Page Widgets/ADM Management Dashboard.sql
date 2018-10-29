@@ -34,7 +34,7 @@ WHERE S.isActive = 1
 
 
 UNION	-- New Starts in the current month
-SELECT CONCAT('<a target="_blank" href="https://bba.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR), '&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>') AS 'Student Type'
+SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR), '&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>') AS 'Student Type'
 	, COUNT(DISTINCT S.idNumber)
     
 FROM Students S

@@ -2,7 +2,7 @@
 -- Kelly MJ  |  9/5/2018
 -- Links to admin start page widgets
 
-SELECT CONCAT('<a target="_blank" href="https://bba.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', CAST(Q.queryTitle AS CHAR),'</a>') 'Widget Links'
+SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', CAST(Q.queryTitle AS CHAR),'</a>') 'Widget Links'
 
 FROM CustomStartPageQueries Q
 

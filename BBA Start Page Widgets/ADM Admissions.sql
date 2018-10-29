@@ -21,7 +21,7 @@ WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 
 */
 
 UNION	-- Leads added since first day of months
-SELECT CONCAT('<a target="_blank" href="https://bba.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link):</a>')
+SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link):</a>')
 	, COUNT(C.contactId)
 FROM Contacts C
 LEFT JOIN CustomStartPageQueries Q
@@ -49,14 +49,14 @@ INNER JOIN (
 
 
 UNION	-- Link to leads per stage
-SELECT CONCAT('<a target="_blank" href="https://bba.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
+SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
 	, NULL
 FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Stage'
 
 
 /***** STILL NEEDS TO BE WRITTEN *****/
 UNION	-- Link to leads per program
-SELECT CONCAT('<a target="_blank" href="https://bba.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
+SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
 	, NULL
 FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Program'
 
