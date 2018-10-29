@@ -32,15 +32,6 @@ INNER JOIN Classes C
 	                    AND CG.courseGroupId=GSR.courseGroupId AND GSR.isActive=1)
 	AND (C.className LIKE '%Intern%' OR C.className LIKE '%IC')
 
-INNER JOIN ClassStudentReltn CSR
-	ON CSR.classId = C.classId
-	AND CSR.isActive = 1
-	AND R.studentId = CSR.studentId
-
-INNER JOIN Students S
-	ON R.studentId = S.studentId
-	AND S.isActive = 1 
-
 WHERE R.<ADMINID>
 	AND R.studentId = [USERID]
   
@@ -74,15 +65,6 @@ INNER JOIN Classes C
 	AND C.className NOT LIKE '%Intern%'
 	AND C.className NOT LIKE '%IC'
 
-INNER JOIN ClassStudentReltn CSR
-	ON CSR.classId = C.classId
-	AND CSR.isActive = 1
-	AND R.studentId = CSR.studentId
-
-INNER JOIN Students S
-	ON R.studentId = S.studentId
-	AND S.isActive = 1 
-
 WHERE R.<ADMINID>
 	AND R.studentId = [USERID]
   
@@ -113,15 +95,6 @@ INNER JOIN Classes C
 	AND C.subjectId IN (SELECT subjectId FROM GroupSubjectReltn GSR, CourseGroups CG
 						WHERE CG.programmeId=R.programmeId AND CG.isActive=1
 	                    AND CG.courseGroupId=GSR.courseGroupId AND GSR.isActive=1)
-
-INNER JOIN ClassStudentReltn CSR
-	ON CSR.classId = C.classId
-	AND CSR.isActive = 1
-	AND R.studentId = CSR.studentId
-
-INNER JOIN Students S
-	ON R.studentId = S.studentId
-	AND S.isActive = 1 
 
 WHERE R.<ADMINID>
 	AND R.studentId = [USERID]

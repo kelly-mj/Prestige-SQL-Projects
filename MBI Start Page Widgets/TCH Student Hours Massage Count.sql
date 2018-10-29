@@ -67,7 +67,7 @@ INNER JOIN (
 -- sum of massages per student
 LEFT JOIN (
 	SELECT studentId
-		, SUM(serviceUnit) as massageCount
+		, SUM(serviceUnit)/2 as massageCount
 	FROM StudentService
 	WHERE service LIKE 'M-Massages'
 	AND isActive = 1
