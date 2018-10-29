@@ -20,10 +20,12 @@ WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 
 	AND C.<ADMINID>
 */
 
-UNION	-- Leads added since first day of month
-SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=234&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link): ')
+UNION	-- Leads added since first day of months
+SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">Leads added in ', DATE_FORMAT(CURDATE(), '%M'), ' (link):</a>')
 	, COUNT(C.contactId)
 FROM Contacts C
+LEFT JOIN CustomStartPageQueries Q
+	ON Q.adminid = C.adminid AND Q.userType = 4 AND Q.queryTitle = 'New Leads in the Current Month'
 WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049, 4000050)	-- including "Lost" leads
 	AND DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 	AND C.<ADMINID>
@@ -47,14 +49,16 @@ INNER JOIN (
 
 
 UNION	-- Link to leads per stage
-SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=231&type=spquery">Leads Count by Stage (link)</a>' AS 'Type'
+SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
 	, NULL
+FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Stage'
 
 
+/***** STILL NEEDS TO BE WRITTEN *****/
 UNION	-- Link to leads per program
-SELECT '<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=231&type=spquery">Leads Count by Program (link)</a>'
+SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
 	, NULL
-
+FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Program'
 
 /*
 UNION	-- Leads from the previous month

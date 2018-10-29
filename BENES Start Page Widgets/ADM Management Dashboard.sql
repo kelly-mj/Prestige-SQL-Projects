@@ -34,13 +34,15 @@ WHERE S.isActive = 1
 
 
 UNION	-- New Starts in the current month
-SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=230&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>') AS 'Student Type'
+SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR), '&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>') AS 'Student Type'
 	, COUNT(DISTINCT S.idNumber)
     
 FROM Students S
 INNER JOIN Registrations R
 	ON R.studentId = S.studentId
     AND R.enrollmentSemesterId = 4000441
+LEFT JOIN CustomStartPageQueries Q
+	ON Q.adminid = R.adminid AND Q.userType = 4 AND Q.queryTitle = 'New Start Students In the Current Month'
 
 WHERE S.isActive = 1
 	AND R.isActive = 1
