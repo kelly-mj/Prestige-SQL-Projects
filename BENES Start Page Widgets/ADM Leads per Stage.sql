@@ -1,4 +1,4 @@
--- ADMIN Widget: Leads per Stage
+-- ADM, STF Widget: Leads per Stage
 -- Kelly MJ  |  09/10/2018 WITH HEADERS
 
 -- New Port Richey
@@ -8,7 +8,7 @@ SELECT NULL AS 'Lead Type'
 UNION
 SELECT t1.Type, t1.Count
 FROM (
-	SELECT SA.campusCode AS Campus
+	SELECT PFV.fieldValue AS Campus
 		, CT.typeName AS Type
 		, COUNT(C.contactId) AS Count
 
@@ -18,14 +18,16 @@ FROM (
 		ON CT.contactTypeId = C.contactTypeId
 		AND CT.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000050, 4000049)
 
-	LEFT JOIN SubAdmins SA
-		ON SA.subAdminId = C.subAdminId
+	INNER JOIN ProfileFieldValues PFV
+		ON PFV.userId = C.contactId
+		AND PFV.fieldName = 'CAMPUS' AND PFV.fieldValue = 'New Port Richey'
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
-		AND C.subAdminId NOT IN (SELECT subAdminId FROM SubAdmins WHERE campusCode IN (34601, 34606))
+		-- AND C.subAdminId NOT IN (SELECT subAdminId FROM SubAdmins WHERE campusCode IN (34601, 34606))
 
 	GROUP BY CT.typeName) t1
+-- WHERE t1.Campus = 34652
 
 UNION	-- Spring Hill
 SELECT NULL AS 'Lead Type'
@@ -34,7 +36,7 @@ SELECT NULL AS 'Lead Type'
 UNION 
 SELECT t2.Type, t2.Count
 FROM (
-	SELECT SA.campusCode AS Campus
+	SELECT PFV.fieldValue AS Campus
 		, CT.typeName AS Type
 		, COUNT(C.contactId) AS Count
 
@@ -44,14 +46,14 @@ FROM (
 		ON CT.contactTypeId = C.contactTypeId
 		AND CT.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000050, 4000049)
 
-	LEFT JOIN SubAdmins SA
-		ON SA.subAdminId = C.subAdminId
+	INNER JOIN ProfileFieldValues PFV
+		ON PFV.userId = C.contactId
+		AND PFV.fieldName = 'CAMPUS' AND PFV.fieldValue = 'Spring Hill'
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
 
 	GROUP BY Campus, CT.typeName) t2
-WHERE t2.Campus = 34606
 
 UNION	-- Brookesville
 SELECT NULL AS 'Lead Type'
@@ -60,7 +62,7 @@ SELECT NULL AS 'Lead Type'
 UNION
 SELECT t3.Type, t3.Count
 FROM (
-	SELECT SA.campusCode AS Campus
+	SELECT PFV.fieldValue AS Campus
 		, CT.typeName AS Type
 		, COUNT(C.contactId) AS Count
 
@@ -70,11 +72,11 @@ FROM (
 		ON CT.contactTypeId = C.contactTypeId
 		AND CT.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000050, 4000049)
 
-	LEFT JOIN SubAdmins SA
-		ON SA.subAdminId = C.subAdminId
+	INNER JOIN ProfileFieldValues PFV
+		ON PFV.userId = C.contactId
+		AND PFV.fieldName = 'CAMPUS' AND PFV.fieldValue = 'Brooksville'
 
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
 
 	GROUP BY Campus, CT.typeName) t3
-WHERE t3.Campus = 34601
