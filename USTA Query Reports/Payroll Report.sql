@@ -4,8 +4,7 @@
 /*
  *  REGULAR HOURS (at or below 40 hours)
  */
- 
-SELECT t1.id 'ID'
+SELECT FORMAT(t1.id, 0) 'ID'
     , t1.name 'Name'
     , FORMAT(IF(t1.duration <= 40.0, duration, 40), 2) 'Hours'
     , t1.paycode 'Paycode'
@@ -20,7 +19,7 @@ FROM (
     INNER JOIN Teachers T
         ON T.teacherId = TA.teacherId
         
-    WHERE TA.attendanceDate BETWEEN '2018-11-11' AND '2018-11-17'   -- '[?Start Date]' AND '[?End Date]'
+    WHERE TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'   -- '2018-11-11' AND '2018-11-17'
     AND TA.<ADMINID>
     
     GROUP BY T.teacherID
@@ -46,7 +45,7 @@ FROM (
     INNER JOIN Teachers T
         ON T.teacherId = TA.teacherId
         
-    WHERE TA.attendanceDate BETWEEN '2018-11-11' AND '2018-11-17'   -- '[?Start Date]' AND '[?End Date]'
+    WHERE TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'   -- '2018-11-11' AND '2018-11-17'
     AND TA.<ADMINID>
     
     GROUP BY T.teacherID
@@ -58,5 +57,4 @@ WHERE t1.duration > 40.0
 /*
  * AFFECTS ALL 'UNIONS'
  */
- 
 ORDER BY id
