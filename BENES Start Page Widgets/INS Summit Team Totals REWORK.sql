@@ -37,7 +37,7 @@ FROM( SELECT SC.studentiD AS SID
 	WHERE FieldName = 'TEAM_NAME'
 	  AND PVF.fieldValue != ''
 	  AND PVF.usertype != 3 
-	  AND SC.creationDtTm BETWEEN DATE('2018-06-01') AND DATE('2018-08-01')
+	  AND SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01')
 	  AND SC.ParentCategory IN ('Service','Retail', '1. Service')
 	  AND SC.<ADMINID>
 
@@ -55,7 +55,7 @@ INNER  JOIN (
 	FROM StudentServiceCustomerReltn SC
 	INNER JOIN Students STD 
 		ON STD.StudentID = SC.studentID
-	WHERE SC.creationDtTm BETWEEN DATE('2018-06-01') AND DATE('2018-08-01') 
+	WHERE SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01') 
 	AND SC.ParentCategory IN ('Service','Retail', '1. Service') 
 	GROUP BY STD.studentID
 ) AS NewCustomers ON NewCustomers.SID = DistinctDate.SID
@@ -64,7 +64,7 @@ INNER JOIN (
 	SELECT COUNT(SC.customerName) AS CustomerCount
 		, SC.studentId AS SID
 	FROM StudentServiceCustomerReltn SC
-	WHERE SC.creationDtTm BETWEEN DATE('2018-06-01') AND DATE('2018-08-01')
+	WHERE SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01')
     AND (SC.ParentCategory = 'Retail' OR SC.parentcategory = 'Service')
 	GROUP BY SC.studentID
 ) AS Customers ON Customers.SID = DistinctDate.SID
@@ -81,7 +81,7 @@ INNER JOIN (
 		, COUNT(CASE WHEN SC.serviceName = 'Referral Customer' THEN 1 END) AS Referral
 		, COUNT(CASE WHEN SC.serviceName = 'Add On Service' THEN 1 END) AS AddOn
 	FROM StudentServiceCustomerReltn SC
-	WHERE SC.creationDtTm BETWEEN DATE('2018-06-01') AND DATE('2018-08-01')
+	WHERE SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01')
 	GROUP BY SC.studentID
 ) AS SalesData ON NewCustomers.SID = SalesData.SID
 
@@ -108,7 +108,7 @@ FROM( SELECT COUNT(Distinct CustomerName) AS TotalCustomers,
 	INNER JOIN  (SELECT PVF.usertype as UT, PVF.userID, PVF.fieldValue AS FV  
 			       FROM ProfileFieldValues PVF 
                                WHERE PVF.usertype = 3 AND PVF.userID = [USERID]) AS t1 ON t1.FV = PVF.fieldValue 
-        WHERE FieldName = 'TEAM_NAME' and PVF.fieldValue != '' AND PVF.usertype != 3 AND SC.creationDtTm BETWEEN DATE('2018-06-01') AND DATE('2018-08-01')  AND
+        WHERE FieldName = 'TEAM_NAME' and PVF.fieldValue != '' AND PVF.usertype != 3 AND SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01')  AND
             (SC.ParentCategory IN ('Service','Retail', '1. Service')) AND SC.<ADMINID>
         GROUP BY FieldValue) AS DistinctDate
 
@@ -122,7 +122,7 @@ INNER JOIN (SELECT  PVF.fieldValue
             INNER JOIN ProfileFieldValues PVF 
 					ON PVF.userID = SC.StudentID
 			WHERE
-            SC.creationDtTm BETWEEN DATE('2018-06-01') AND DATE('2018-08-01') AND FieldName = 'TEAM_NAME'
+            SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01') AND FieldName = 'TEAM_NAME'
             GROUP BY PVF.fieldvalue) AS SalesData ON DistinctDate.fieldValue = SalesData.fieldValue
 
 GROUP BY DistinctDate.FieldValue
