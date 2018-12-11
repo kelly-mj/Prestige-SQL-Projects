@@ -8,7 +8,7 @@ SELECT t1.idNumber
 		WHEN t1.hours BETWEEN 500 AND 600 THEN CONCAT(TH.className, ' /</br>', IC.className)
         ELSE IC.className
 	  END AS Class
-    , CP.clockedStatus
+    , CONCAT(IF(CPP.clockedStatus%2=1, 'Clocked In', 'Clocked Out')) AS Status
     , CP.lastPunch
 
 FROM (
@@ -60,11 +60,14 @@ LEFT JOIN (
 INNER JOIN (
 	SELECT userId
 		, DATE_FORMAT(MAX(punchTime), '%a %m/%d/%y</br>%h:%i %p') AS lastPunch
-        , MAX(punchTime) maxPunch
-        , CONCAT(IF(clockedStatus%2=1, 'Clocked In', 'Clocked Out')) AS clockedStatus
+        , MAX(punchTime) AS maxPunch
 	FROM ClockPunches
     WHERE userId IN (SELECT studentId FROM Students WHERE isActive = 1)
     GROUP BY userId ) CP
     ON CP.userId = t1.studentId
+
+INNER JOIN ClockPunches CPP
+	ON CPP.userId = t1.studentId
+	AND CPP.punchTime = CP.maxPunch
     
 ORDER BY DATE(CP.maxPunch) DESC, t1.lastName
