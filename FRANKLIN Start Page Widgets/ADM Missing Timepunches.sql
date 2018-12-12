@@ -6,8 +6,6 @@ SELECT CONCAT('<a href="view_attendance.jsp?semesterid=', CAST(REG.enrollmentSem
 	, MAX(ATD.duration) AS Duration
 	, ATD.attendanceDate AS Attendance_Date
     , ATD.attendanceClockPunch
-    , ATD.attendanceId
-    , ATD.attendanceType
 
 FROM (
 	SELECT A.studentId
