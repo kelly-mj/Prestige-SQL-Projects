@@ -1,3 +1,7 @@
+-- Edited by Kelly MJ
+-- 12/12/2018: Date ranges will automatically reset in the following pattern: On even months, the summit period resets for a new 2-month period
+   -- (ex: In Feb, the daterange will be 2018-02-01 to 2018-04-01. In Apr, the daterange becomes 2018-04-01 to 2018-06-01, etc.)
+
 SELECT DistinctDate.Name AS 'Student Name'
 , SalesData.TotalService AS '# Of Services'
 , CONCAT('<div align="right">','$',SalesData.ServiceSUM,'</div>') AS 'Total Services'
@@ -13,9 +17,17 @@ FROM
 		FROM StudentServiceCustomerReltn SC
 		INNER JOIN Students STD 
 				ON STD.StudentID = SC.studentID
-		WHERE SC.creationDTtm AND STD.studentId = [USERID] AND
-		SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01') AND 
-        (SC.ParentCategory IN ('Service','Retail', '1. Service')) AND SC.<ADMINID>
+		WHERE SC.creationDTtm AND STD.studentId = [USERID]
+		-- DATERANGE
+		AND CASE
+                WHEN MONTH(CURDATE()) = 1 THEN SC.creationDtTm BETWEEN CONCAT(YEAR(CURDATE())-1, '-12-01') AND LAST_DAY(CURDATE())
+                WHEN MONTH(CURDATE()) IN (2, 4, 6, 8, 10) THEN SC.creationDtTm BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))
+                WHEN MONTH(CURDATE()) IN (3, 5, 7, 9, 11) THEN SC.creationDtTm BETWEEN DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') AND LAST_DAY(CURDATE())
+                WHEN MONTH(CURDATE()) = 12 THEN SC.creationDtTm BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))
+                ELSE 'error setting daterange'
+            	END
+        -- END DATERANGE
+        AND (SC.ParentCategory IN ('Service','Retail', '1. Service')) AND SC.<ADMINID>
 		GROUP BY STD.studentID,SC.CustomerName, MONTH(SC.creationDTtm), DAY(SC.creationDTtm)) AS DistinctDate
 
 INNER JOIN (SELECT COUNT(Distinct CustomerName) AS NewCustomer, SC.studentiD AS SID, Concat(STD.FirstName, '  ', STD.lastName) AS Name,
@@ -23,9 +35,17 @@ INNER JOIN (SELECT COUNT(Distinct CustomerName) AS NewCustomer, SC.studentiD AS 
 			FROM StudentServiceCustomerReltn SC
 			INNER JOIN Students STD 
 					ON STD.StudentID = SC.studentID
-			WHERE SC.creationDTtm AND STD.studentId = [USERID]  AND
-			SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01') AND
-            (SC.ParentCategory IN ('Service','Retail', '1. Service')) AND SC.<ADMINID>
+			WHERE SC.creationDTtm AND STD.studentId = [USERID]
+			-- DATERANGE
+			AND CASE
+                WHEN MONTH(CURDATE()) = 1 THEN SC.creationDtTm BETWEEN CONCAT(YEAR(CURDATE())-1, '-12-01') AND LAST_DAY(CURDATE())
+                WHEN MONTH(CURDATE()) IN (2, 4, 6, 8, 10) THEN SC.creationDtTm BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))
+                WHEN MONTH(CURDATE()) IN (3, 5, 7, 9, 11) THEN SC.creationDtTm BETWEEN DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') AND LAST_DAY(CURDATE())
+                WHEN MONTH(CURDATE()) = 12 THEN SC.creationDtTm BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))
+                ELSE 'error setting daterange'
+                END
+        -- END DATERANGE
+            AND (SC.ParentCategory IN ('Service','Retail', '1. Service')) AND SC.<ADMINID>
 			GROUP BY STD.studentID) AS TotalCustomers ON DistinctDate.SID = TotalCustomers.SID
      
 INNER JOIN (SELECT  SC.studentID AS SID
@@ -39,6 +59,15 @@ INNER JOIN (SELECT  SC.studentID AS SID
 			, COUNT(CASE WHEN SC.serviceName = 'Referral Customer' THEN 1 END) AS Referral
 			, COUNT(CASE WHEN SC.serviceName = 'Add On Service' THEN 1 END) AS AddOn
 			FROM StudentServiceCustomerReltn SC
-			WHERE SC.creationDTtm AND SC.studentId = [USERID] AND 
-            SC.creationDtTm BETWEEN DATE('2018-12-01') AND DATE('2019-01-01') AND SC.<ADMINID>) AS SalesData ON TotalCustomers.SID = SalesData.SID
+			WHERE SC.creationDTtm AND SC.studentId = [USERID]
+            -- DATERANGE
+			AND CASE
+                WHEN MONTH(CURDATE()) = 1 THEN SC.creationDtTm BETWEEN CONCAT(YEAR(CURDATE())-1, '-12-01') AND LAST_DAY(CURDATE())
+                WHEN MONTH(CURDATE()) IN (2, 4, 6, 8, 10) THEN SC.creationDtTm BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))
+                WHEN MONTH(CURDATE()) IN (3, 5, 7, 9, 11) THEN SC.creationDtTm BETWEEN DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') AND LAST_DAY(CURDATE())
+                WHEN MONTH(CURDATE()) = 12 THEN SC.creationDtTm BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))
+                ELSE 'error setting daterange'
+                END
+        -- END DATERANGE
+            AND SC.<ADMINID>) AS SalesData ON TotalCustomers.SID = SalesData.SID
 GROUP BY DistinctDate.Name
