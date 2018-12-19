@@ -28,7 +28,7 @@ FROM
        FROM TeacherAttendance TA
        INNER JOIN Teachers T 
            ON TA.teacherID = T.teacherID
-       WHERE DATE(TA.attendancedate)  BETWEEN '2018-12-03' AND '2018-12-08'
+       WHERE DATE(TA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
          AND TA.isactive = 1
          and T.isactive = 1
          AND (duration > 0 OR TA.reasonType > 0 OR TA.reasonText > 'a')
@@ -47,7 +47,7 @@ UNION
        FROM SubAdminAttendance SAA
        INNER JOIN SubAdmins SA 
        ON SA.SubAdminID = SAA.SubAdminID
-       WHERE DATE(SAA.attendancedate)  BETWEEN '2018-12-03' AND '2018-12-08'
+       WHERE DATE(SAA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
          AND SAA.isactive = 1 
          and SA.isactive = 1 
          AND (duration > 0 OR SAA.reasonType > 0 OR SAA.reasonText > 'a') 
@@ -92,7 +92,7 @@ FROM (
        FROM TeacherAttendance TA
        INNER JOIN Teachers T 
            ON TA.teacherID = T.teacherID
-       WHERE DATE(TA.attendancedate)  BETWEEN '2018-12-03' AND '2018-12-08'
+       WHERE DATE(TA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
          AND TA.isactive = 1
          and T.isactive = 1  
          AND (duration > 0 OR TA.reasonType > 0)
@@ -110,7 +110,7 @@ UNION
        FROM SubAdminAttendance SAA
        INNER JOIN SubAdmins SA 
        ON SA.SubAdminID = SAA.SubAdminID
-       WHERE DATE(SAA.attendancedate)  BETWEEN '2018-12-03' AND '2018-12-08'
+       WHERE DATE(SAA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
          AND SAA.isactive = 1 
          and SA.isactive = 1 
          AND (duration > 0 OR SAA.reasonType > 0) 
