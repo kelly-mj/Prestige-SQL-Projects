@@ -1,5 +1,6 @@
--- Students Within 100 Hours of Graduation
+-- BENES ADM Students Within 100 Hours of Graduation
 -- Kelly MJ  |  12/20/2018
+-- original made 7/19/2017
 
 SELECT t1.Name
 	, t1.Campus
