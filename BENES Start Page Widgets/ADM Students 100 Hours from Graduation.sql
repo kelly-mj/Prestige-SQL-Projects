@@ -1,44 +1,67 @@
-/* Students within 100 hours of graduation */
+-- Students Within 100 Hours of Graduation
+-- Kelly MJ  |  12/20/2018
 
-select st.idNumber "Student Id",
-           CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(st.studentId AS CHAR), '">', st.firstName, ' ', st.lastName, '</a>') AS 'Student Name',
-           COALESCE(ca.campusName,'Invalid Campus') as "Campus Name",
-           prog.programmeName "Program",    
-	  prog.minClockHours "Required Pgm Hours",  
-          Round(hrs.totalhours,2) "Actual Hours",
-          Round((prog.minClockHours - hrs.totalhours),2) "Remaining",
-          DATE_FORMAT(hrs.lastday,'%m/%d/%Y') "Last Day Of Att"
-from   Registrations reg
-           LEFT JOIN Campuses ca ON ca.campusCode = reg.studentCampus,
-           Students st,
-           Programmes prog,
-          (Select crel.studentId,
-                       crel.registrationId,
-                       SUM(att.duration) as "TotalHours",
-		       MAX(attendanceDate) as "Lastday"
-           from ClassStudentReltn crel,
-		    Attendance att
-           where 1=1
-           and  att.studentid = crel.studentid
-           and  att.classid = crel.classid 
-           and  crel.isActive = 1
-           Group by crel.studentId,
-                            crel.registrationId) hrs 
-where  1=1
-and    reg.<ADMINID>
-and    st.studentId = reg.studentId
-and    prog.programmeId = reg.programmeId
-and    hrs.studentId = st.studentId
-and    hrs.registrationId = reg.registrationId
-and    reg.graduationdate IS NULL 
-and    reg.isActive = 1
-and    st.isActive = 1
-and 	  prog.programmeId <> 4000999   
-and    ((prog.minClockHours - hrs.totalhours) >   0
-              and    (prog.minClockHours - hrs.totalhours) <= 100)
-AND IFNULL(PV.fieldValue,"") = (Select CMP.campusName From SubAdmins SA 
-													LEFT JOIN Campuses CMP  ON SA.campusCode = CMP.campusCode 
-													Where SA.<ADMINID> AND SA.subAdminId=[USERID])
-ORDER BY ca.campusName,
-		      st.lastName,
-		      st.firstName
+SELECT t1.Name
+	, t1.Campus
+	, t1.Program
+	, FORMAT(t1.PH, 0) 'Pgm Hours'
+	, FORMAT(t1.HA, 2) 'Actual Hours'
+	, FORMAT(t1.PH - t1.HA, 2) 'Remaining' 
+
+FROM (
+	SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+		, CASE S.studentCampus
+			WHEN 34652 THEN 'NPR'
+			WHEN 34601 THEN 'BKS'
+			WHEN 34606 THEN 'SH'
+		  END AS Campus
+		, P.programmeName AS Program
+		, ROUND(SUM(A.duration), 2) AS HA	-- hours attended
+		, ROUND(P.minClockHours, 0) AS PH	-- program hours
+
+	FROM Students S
+
+	INNER JOIN (
+		SELECT studentId, MAX(startDate) AS maxDate FROM Registrations
+		WHERE isActive = 1 AND programmeId NOT IN ( SELECT programmeId FROM Programmes WHERE programmeName LIKE '%career%' ) AND regStatus = 1
+	    GROUP BY studentId) RR
+		ON RR.studentId = S.studentId
+
+	INNER JOIN Registrations R
+		ON R.studentId = S.studentId
+		AND R.startDate = RR.maxDate
+		AND R.isActive = 1 AND R.regStatus = 1
+
+	INNER JOIN Programmes P
+		ON P.programmeId = R.programmeId
+
+	LEFT JOIN Campuses CA
+		ON CA.campusCode = S.studentCampus
+
+	INNER JOIN Attendance A
+		ON R.studentId = A.studentId
+		AND A.isActive = 1
+		AND A.attendanceDate >= R.startDate
+
+	INNER JOIN Classes C
+		ON C.classId = A.classId
+		AND C.startDate <= CURDATE() and C.endDate >= CURDATE()
+		AND C.isActive = 1
+		AND C.subjectId IN (SELECT subjectId FROM GroupSubjectReltn GSR, CourseGroups CG
+		          WHERE CG.programmeId=R.programmeId AND CG.isActive=1
+		          AND CG.courseGroupId=GSR.courseGroupId AND GSR.isActive=1)
+
+	INNER JOIN ClassStudentReltn CSR
+		ON CSR.classId = C.classId
+		AND CSR.isActive = 1
+		AND R.studentId = CSR.studentId
+
+	WHERE S.<ADMINID>
+	AND S.isActive = 1
+
+	GROUP BY S.studentId
+) t1
+
+WHERE t1.PH - t1.HA <= 100
+
+ORDER BY Campus, (t1.PH - t1.HA)
