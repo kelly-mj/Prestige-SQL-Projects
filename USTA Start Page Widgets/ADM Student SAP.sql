@@ -1,30 +1,42 @@
 -- USTA ADM Student SAP
 -- Written by Andrew
+-- Edited by Kelly MJ  |  12/18/2018
 
-SELECT CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(SDT.studentId AS CHAR), '">', SDT.firstName, ' ', SDT.lastName, '</a>') AS 'Student Name',
-PRG.programmeName AS Program,
-CMP.campusName AS 'Campus',
-Concat( '<div align="center">', CAST(SUM(CLS.lessonDuration) AS dec(10)) ,'</div>') As 'Scheduled Hours',
-CAST(SUM(ATD.duration) AS dec(10)) as 'Actual Hours',
-CONCAT( '<div align="center">', ROUND(SUM(ATD.duration)/SUM(CLS.lessonDuration)*100,1),'%', '</div>') As 'Attendance Percentage',
-CONCAT( '<div align="center">', ROUND(SUM(ATD.duration)/(PRG.minClockHours)*100,1),'%', '</div>') As 'Program Completion' ,
-PRG.minClockHours as 'Total Hours'
-
-
-
-
+SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Student Name'
+	, P.programmeName AS Program
+	, SCH.fieldValue AS 'Sch. Hours'
+	, ATT.fieldValue AS 'Actual Hours'
+	, CONCAT( '<div align="center">', ROUND(ATT.fieldValue/SCH.fieldValue*100, 1),'%', '</div>') As 'Attendance Percentage'
+	, CONCAT( '<div align="center">', ROUND(ATT.fieldValue/P.minClockHours*100,1),'%', '</div>') As 'Program Completion'
+	, P.minClockHours as 'Program Hours'
     
-    FROM Registrations REG
-INNER JOIN Attendance ATD ON REG.studentId=ATD.studentId AND ATD.isActive=1
-INNER JOIN Classes CLS ON ATD.classId = CLS.classId AND CLS.isActive=1
-INNER JOIN Students SDT ON REG.studentId = SDT.studentId AND SDT.isActive=1
-INNER JOIN Campuses CMP ON SDT.studentCampus = CMP.campusCode AND CMP.isActive=1
-INNER JOIN Programmes PRG ON PRG.programmeId = REG.programmeId AND PRG.isActive=1
-WHERE
-	REG.<ADMINID> AND REG.isActive=1 AND
-	REG.enrollmentSemesterId = 4000441 AND
-    REG.endDate>=CURDATE() 
-   
+FROM Registrations R
 
-GROUP BY SDT.studentId
-ORDER BY CMP.campusName, SDT.lastName, PRG.programmeName ASC
+INNER JOIN Attendance A
+	ON R.studentId=A.studentId
+	AND A.isActive=1
+
+INNER JOIN Students S
+	ON R.studentId = S.studentId
+	AND S.isActive=1
+
+INNER JOIN Programmes P
+	ON P.programmeId = R.programmeId
+	AND P.isActive=1
+
+INNER JOIN ProfileFieldValues SCH
+	ON SCH.userId = S.studentId
+	AND SCH.fieldName = 'PROGRAM_HOURS_SCHEDULED'
+
+INNER JOIN ProfileFieldValues ATT
+	ON ATT.userId = S.studentId
+	AND ATT.fieldName = 'PROGRAM_HOURS_ATTENDED'
+
+WHERE R.<ADMINID>
+AND R.isActive = 1
+AND R.enrollmentSemesterId = 4000441
+AND R.endDate >= CURDATE() 
+
+GROUP BY S.studentId
+
+ORDER BY P.programmeName, S.lastName

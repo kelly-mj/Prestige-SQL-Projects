@@ -4,16 +4,23 @@
 
 
 -- Total enrolled students (for monthly billing)
-SELECT '<strong>Total Enrolled Students (for monthly billing):</strong>' AS 'Type', CONCAT('<strong>', COUNT(Distinct S.studentId), '</strong>') 'Count'
+SELECT CONCAT('<strong>Enrolled Students as of ', DATE_FORMAT(CURDATE(), '%b 1st'),':</strong>') AS 'Type', CONCAT('<strong>', COUNT(Distinct S.studentId), '</strong>') 'Count'
 FROM Students S
-,Registrations R, Programmes P
+INNER JOIN (
+	SELECT studentId, MAX(startDate) AS maxDate FROM Registrations
+	GROUP BY studentId) RR
+	ON RR.studentId = S.studentId
+INNER JOIN Registrations R
+	ON R.studentId = S.studentId
+	AND R.startDate = RR.maxDate
+INNER JOIN Programmes P
+	ON P.programmeId = R.programmeId
 WHERE S.isActive = 1
 AND S.<ADMINID>
-AND R.studentId=S.studentId
 AND R.regStatus = 1
+AND R.startDate <= DATE_FORMAT(CURDATE(), '%Y-%m-01')
 AND R.isActive = 1
 AND P.isActive = 1
-AND P.programmeId = R.programmeId
 AND S.studentId Not In (Select Distinct L.studentId From LeavesOfAbsence L WHERE L.isActive = 1 AND (leaveDate < Now() AND (L.returnDate IS NULL OR L.returnDate > NOW())) AND L.<ADMINID>)
 AND S.firstName NOT LIKE '%test%'
 

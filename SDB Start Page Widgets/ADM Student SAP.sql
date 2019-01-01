@@ -5,7 +5,7 @@
  *	Students who have accumulated over 400 scheduled hours
  */
 
-SELECT '<strong>Over 400 Scheduled Hours</strong>' AS 'Name'
+SELECT '<strong>Over 400 Sch. Hours</strong>' AS 'Name'
 	, NULL 'Program'
 	, NULL 'Sch.<br>Hours'
 	, NULL 'Actual<br>Hours'
@@ -20,7 +20,7 @@ SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST
 	, CAST(SUM(ATD.duration) AS dec(10)) as 'Actual Hours'
 	, CONCAT( '<div align="center">', ROUND(SUM(100*ATD.duration)/SCH.fieldValue, 0),'%', '</div>') As 'Att %'
 	, CONCAT( '<div align="center">', ROUND(SUM(ATD.duration)/(PRG.minClockHours)*100, 0),'%', '</div>') As 'Program<br>Completion'
-	, PRG.minClockHours as 'Program<br>Hours'
+	, FORMAT(PRG.minClockHours, 0) as 'Program<br>Hours'
 
 FROM Registrations REG
 
@@ -51,7 +51,7 @@ ORDER BY SDT.lastName, PRG.programmeName ASC )
  *	Students who have acculmulated over 800 scheduled hours
  */
 UNION
-SELECT '<strong>Over 800 Scheduled Hours</strong>' AS 'Name', NULL, NULL, NULL, NULL, NULL, NULL
+SELECT '<strong>Over 800 Sch. Hours</strong>' AS 'Name', NULL, NULL, NULL, NULL, NULL, NULL
 
 UNION (
 SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(SDT.studentId AS CHAR), '">', SDT.lastName, ', ', SDT.firstName, '</a>') AS 'Name'
@@ -60,7 +60,7 @@ SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST
 	, CAST(SUM(ATD.duration) AS dec(10)) as 'Actual Hours'
 	, CONCAT( '<div align="center">', ROUND(SUM(100*ATD.duration)/SCH.fieldValue, 0),'%', '</div>') As 'Att %'
 	, CONCAT( '<div align="center">', ROUND(SUM(ATD.duration)/(PRG.minClockHours)*100, 0),'%', '</div>') As 'Program<br>Completion'
-	, PRG.minClockHours as 'Program<br>Hours'
+	, FORMAT(PRG.minClockHours, 0) as 'Program<br>Hours'
 
 FROM Registrations REG
 

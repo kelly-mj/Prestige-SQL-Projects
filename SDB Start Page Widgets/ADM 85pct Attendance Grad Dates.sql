@@ -5,8 +5,8 @@ SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST
 	, R.startDate 'Start Date'
     , R.endDate 'Contract End Date'
     -- , DATE_ADD(R.endDate, INTERVAL (ROUND((1 - t1.attPercent)*DATEDIFF(R.endDate, R.startDate), 0)) DAY) 'Projected End Date'        -- for percentage determined by student's current attendance rate
-    , DATE_ADD(R.endDate, INTERVAL (ROUND((1-0.85)*DATEDIFF(R.endDate, R.startDate), 0)) DAY) 'Projected End Date'      -- for 85% attendance
-    , CONCAT(ROUND(100*t1.attPercent, 0), '%') 'Att %'
+    , DATE_ADD(R.endDate, INTERVAL (ROUND((1-0.85)*DATEDIFF(R.endDate, R.startDate), 0)) DAY) 'Projected End Date (85% ATT)'      -- for 85% attendance
+    , CONCAT(ROUND(100*t1.attPercent, 0), '%') '  Att %'
     
 FROM Students S
 
