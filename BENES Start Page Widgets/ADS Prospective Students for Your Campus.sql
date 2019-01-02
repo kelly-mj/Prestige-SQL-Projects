@@ -1,12 +1,12 @@
-	SELECT
-CONCAT('<a href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', CAST(C.firstName AS CHAR), ' ', CAST(C.lastName AS CHAR), '</a>') AS Name,
+-- AMS Prospective Students for Your Campus
+-- Edit: Kelly MJ  |  1/2/2019
 
-	CT.typeName AS Status,
-	IFNULL(PV.fieldValue,"") AS CAMPUS,
-	DATE_FORMAT(C.lastUpdateDtTm, '%m-%d-%y' ) AS 'Last Update'
+SELECT IFNULL(PV.fieldValue,"") AS CAMPUS
+	, CONCAT('<a href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', CAST(C.firstName AS CHAR), ' ', CAST(C.lastName AS CHAR), '</a>') AS Name
+	, CT.typeName AS Status
+	, DATE_FORMAT(C.lastUpdateDtTm, '%m/%d/%Y' ) AS 'Last Update'
         
-FROM
-	Contacts C
+FROM Contacts C
 INNER JOIN ContactTypes CT ON C.contactTypeId = CT.contactTypeId AND CT.isActive=1
 LEFT JOIN ProfileFieldValues PV ON PV.userId=C.contactId AND PV.userType=99 AND PV.fieldName="CAMPUS"  AND PV.isActive=1 AND PV.<ADMINID>
 WHERE
@@ -18,8 +18,6 @@ WHERE
         C.contactTypeId <> 4000049 AND -- not Future Attending Date
         C.contactTypeId <> 4000050 AND -- not lost       
 	C.contactTypeId <> 4000046  -- not enrolled student
-								AND IFNULL(PV.fieldValue,"") = (Select CMP.campusName From SubAdmins SA 
-													LEFT JOIN Campuses CMP  ON SA.campusCode = CMP.campusCode 
-													Where SA.<ADMINID> AND SA.subAdminId=[USERID])
+	AND PV.fieldValue <> 'New Port Richey'
    
-ORDER BY status, C.lastUpdateDtTm DESC
+ORDER BY CAMPUS, status, C.lastUpdateDtTm DESC
