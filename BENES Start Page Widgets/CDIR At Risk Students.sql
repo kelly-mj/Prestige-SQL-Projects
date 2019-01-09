@@ -1,4 +1,4 @@
--- BENES ADM At Risk Students
+-- BENES CDIR At Risk Students
 -- Written by Andrew
 -- Kelly MJ 1/3/19: Added case for when lda is in a separate year than the current date
 
@@ -38,6 +38,7 @@ ON S.studentID = REG.studentID
 AND S.<ADMINID>
 WHERE C.isActive=1 AND R.isActive=1 AND A.isActive=1 AND A.present > 0 AND A.AttendanceDate  BETWEEN (CURRENT_DATE - INTERVAL 60 DAY) AND CURRENT_DATE
 AND S.studentID NOT IN (SELECT LOA.StudentID FROM LeavesOfAbsence LOA WHERE LOA.isactive = 1 AND LOA.returnDate IS NULL OR LOA.returndate = '') 
+AND S.studentCampus IN (SELECT SA.campusCode FROM SubAdmins SA WHERE SA.subAdminId = [USERID])
 GROUP BY A.studentID) as t1) as t2
 WHERE DifD > 7
 ORDER BY DifD DESC
