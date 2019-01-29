@@ -14,7 +14,7 @@ SELECT CASE WHEN t1.studentCampus = 34652 THEN 'New Port Richey'
        END AS 'Leave Date'
 
 ,   CASE WHEN (CurrentDiff +  PAST) >= 170 THEN CONCAT('<font color="white">','<div style="background-color:#ff0000; width: 100%; height:100%; margin:-3px -3px -3px -5px; padding:4px 4px 2px 4px">',expectedReturnDate,'</div>','</font>') 
-	   WHEN expectedReturnDate < CURDATE() THEN CONCAT('<font color="black">','<div style="background-color:#ff0000; width: 100%; height:100%; margin:-3px -3px -3px -5px; padding:4px 4px 2px 4px">' , expectedReturnDate,'</div>','</font>')  
+	   WHEN expectedReturnDate < CURDATE() THEN CONCAT('<font color="black">','<div style="background-color:#ff0000; width: 100%; height:100%; margin:-3px -3px -3px -5px; padding:4px 4px 2px 4px">' , expectedReturnDate,'</div>','</font>')
 	   ELSE expectedReturnDate
        END AS 'Exp. Return'
 
@@ -25,13 +25,12 @@ SELECT CASE WHEN t1.studentCampus = 34652 THEN 'New Port Richey'
 	,  CASE WHEN (CurrentDiff +  PAST) >= 170 THEN CONCAT('<font color="white">','<div style="background-color:#ff0000; width: 100%; height:100%; margin:-3px -3px -3px -5px; padding:4px 4px 2px 4px">',t1.ProgrammeName,'</div>','</font>')
        ELSE t1.ProgrammeName
 	   END AS 'Program'
-	 
 	,  TRUNCATE(SUM(ATT.duration), 0) AS 'Actual Hours'
 
 
 FROM 
 
-	  (SELECT DISTINCT CONCAT('<a href="admin_view_student.jsp?studentid=',CAST(CurrentLOA.StudentID AS CHAR), '">',firstName, ' ', lastName, '</a>') AS Name
+	  (SELECT DISTINCT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=',CAST(CurrentLOA.StudentID AS CHAR), '">',firstName, ' ', lastName, '</a>') AS Name
 	  	   , CurrentLOA.StudentID
 	  	   , studentCampus
            , Lastname
@@ -69,7 +68,9 @@ LEFT JOIN
 	         , ProgrammeName
 		FROM Students STD
 		INNER JOIN LeavesOfAbsence LOA 
-				ON STD.studentId = LOA.studentId 
+				ON STD.studentId = LOA.studentId
+		INNER JOIN ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxId FROM LeavesOfAbsence GROUP BY studentId ) LOA2
+				ON LOA2.studentId = LOA.studentId AND LOA2.maxId = LOA.leavesOfAbsenceId
 		INNER JOIN Registrations REG 
 				ON LOA.studentID = REG.studentID
 		INNER JOIN Programmes PRG 
