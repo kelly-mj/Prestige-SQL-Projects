@@ -11,8 +11,8 @@ FROM (
 	SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.firstName, ' ', S.lastName, '</a>') AS name
 		, P.programmeName
 		, R.startDate
-		, ROUND((SUM(A.duration)/SCH.hours)*100, 2) percent
-		, SUM(A.duration) AS attH
+		, ROUND((ATT.fieldValue/SCH.hours)*100, 2) percent
+		, ATT.fieldValue AS attH
 		, SCH.hours AS schH
 		, S.studentCampus AS Campus
 
@@ -20,24 +20,17 @@ FROM (
 
 	INNER JOIN Students S
 		ON S.studentId = R.studentId
-
-	INNER JOIN Attendance A
-		ON A.studentId = S.studentId
-		AND A.attendanceDate >= R.startDate
-		AND A.isActive = 1
  
-	INNER JOIN (
-		SELECT userId
-			, fieldValue AS hours
+	LEFT JOIN (
+		SELECT userId, fieldValue
 		FROM ProfileFieldValues
-		WHERE fieldName = "HOURS_ATTENDED") ATT
+		WHERE fieldName = 'PROGRAM_HOURS_ATTENDED') ATT
 		ON ATT.userId = R.studentId
 
-	INNER JOIN (
-		SELECT userId
-			, fieldValue AS hours
+	LEFT JOIN (
+		SELECT userId, fieldValue AS hours
 		FROM ProfileFieldValues
-		WHERE fieldName = "HOURS_SCHEDULED_FOR_CURRENT_PROGRAM") SCH
+		WHERE fieldName = 'PROGRAM_HOURS_SCHEDULED') SCH
 		ON SCH.userId = R.studentId
 
 	INNER JOIN ProfileFieldValues PFV
@@ -54,19 +47,9 @@ FROM (
 		ON RR.studentId = R.studentId
 		AND RR.maxStartDate = R.startDate
 
-	INNER JOIN (
-		SELECT studentId, classId
-		FROM ClassStudentReltn
-		WHERE isActive = 1) CSR
-		ON CSR.studentId = R.studentId
-	INNER JOIN Classes C
-		ON C.classId = CSR.classId
-		and C.subjectId IN (SELECT subjectId FROM GroupSubjectReltn GSR, CourseGroups CG WHERE CG.programmeId=R.programmeId and CG.isActive=1 and CG.courseGroupId=GSR.courseGroupId and GSR.isActive=1)
-
 	WHERE R.isActive = 1
 		AND R.enrollmentSemesterId = 4000441
 		AND S.isActive IN (1, 12)
-		AND A.classId = C.classId
 		AND S.studentCampus = (SELECT campusCode FROM SubAdmins WHERE <ADMINID> AND subAdminId=[USERID]) 
 		AND R.<ADMINID>
 
