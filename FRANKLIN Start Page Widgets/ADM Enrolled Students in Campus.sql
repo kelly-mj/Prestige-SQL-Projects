@@ -5,35 +5,25 @@
 -- The purpose of this query is to show
 	-- all active students who appear on the attendance record
 
-SELECT
-	CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(SDT.studentId AS CHAR), '">', CAST(SDT.firstName AS CHAR), ' ', CAST(SDT.lastName AS CHAR), '</a>') AS Name,
-	-- REG.registrationId AS KeyZ,
-	-- ATD.subjectId AS Subject_ID,
-	-- ATD.classId AS Class_ID,
-	PGM.programmeName AS Program_Name,
-	CMP.campusName AS Campus_Name,
-	 SSS.StatusName,
-	FORMAT(SUM(ATD.duration),2) AS Hours_Attended
+SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+	, P.programmeName
+	, R.startDate 'Dates'
+	, FORMAT(SUM(A.duration), 2) AS 'Hours Attended'
 
-FROM Attendance ATD
-	INNER JOIN Registrations	REG ON ATD.studentId = REG.studentId AND NOT REG.isActive = 0
-	INNER JOIN Programmes 		PGM ON REG.programmeId = PGM.programmeId AND NOT PGM.isActive = 0
-	INNER JOIN Students 		SDT ON REG.studentId = SDT.studentId
-	Inner JOIN  Campuses 		CMP ON SDT.studentCampus = CMP.campusCode AND NOT CMP.isActive = 0
-	INNER JOIN StatusSequences SSS ON SSS.statusId = SDT.isActive AND SSS.seqNum = 1 AND  SSS.isActive = 1 AND SSS.<ADMINID> 
-	
-WHERE
-	REG.<ADMINID>						AND
-	NOT REG.isActive = 0				AND
-	REG.enrollmentSemesterId = 4000441	AND
-        SSS.statusID NOT IN (0,3) AND 
-	ATD.subjectId IN (SELECT GSR.subjectId
+FROM Students S
+
+INNER JOIN Registrations R ON R.studentId = S.studentId AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId
+INNER JOIN Attendance A ON A.studentId = S.studentId AND A.isActive
+
+WHERE S.<ADMINID>
+	AND S.isActive = 1
+	AND R.regStatus = 1
+	AND A.subjectId IN (SELECT GSR.subjectId
 			FROM CourseGroups CGP
 			INNER JOIN GroupSubjectReltn GSR ON CGP.courseGroupId=GSR.courseGroupId AND GSR.isActive=1
-			WHERE REG.programmeId = CGP.programmeId and CGP.isActive=1)
-										AND
-	ATD.classId IN (SELECT DISTINCT CRS.classId
+			WHERE R.programmeId = CGP.programmeId and CGP.isActive=1)
+	AND A.classId IN (SELECT DISTINCT CRS.classId
 			From ClassStudentReltn CRS
-			Where CRS.studentId = ATD.studentId AND CRS.isActive=1)
-GROUP BY ATD.studentId
-ORDER BY SDT.firstName
+			Where CRS.studentId = A.studentId AND CRS.isActive=1)
+GROUP BY S.studentId
