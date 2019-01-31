@@ -7,7 +7,7 @@
 
 SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
 	, P.programmeName
-	, R.startDate 'Dates'
+	, DATE_FORMAT(R.startDate, '%m/%d/%Y') 'Dates'
 	, FORMAT(SUM(A.duration), 2) AS 'Hours Attended'
 
 FROM Students S

@@ -4,7 +4,7 @@
 SELECT S.idNumber
 	, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
 	, P.programmeName AS 'Program Name'
-	, R.startDate 'Start Date'
+	, DATE_FORMAT(R.startDate, '%m/%d/%Y') 'Start Date'
     
 FROM Students S
 INNER JOIN Registrations R ON R.studentId = S.studentId AND R.isActive = 1

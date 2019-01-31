@@ -4,50 +4,46 @@
 
 
 -- Total enrolled students (for monthly billing)
-SELECT '<strong>Total Enrolled Students (for monthly billing):</strong>' AS 'Type', CONCAT('<strong>', COUNT(Distinct S.studentId), '</strong>') 'Count'
+SELECT '<strong>Total Enrolled Students (for monthly billing):</strong>' AS 'Type'
+	, CONCAT('<strong>', COUNT(Distinct S.studentId), '</strong>') 'Count'
+
 FROM Students S
-,Registrations R, Programmes P
-WHERE S.isActive = 1
-AND S.<ADMINID>
-AND R.studentId=S.studentId
-AND R.regStatus = 1
-AND R.isActive = 1
-AND P.isActive = 1
-AND P.programmeId = R.programmeId
-AND S.studentId Not In (Select Distinct L.studentId From LeavesOfAbsence L WHERE L.isActive = 1 AND (leaveDate < Now() AND (L.returnDate IS NULL OR L.returnDate > NOW())) AND L.<ADMINID>)
-AND S.firstName NOT LIKE '%test%'
+INNER JOIN Registrations R ON R.studentId = R.studentId AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
 
+WHERE S.<ADMINID>
+	AND S.isActive = 1
+	AND R.regStatus = 1
 
-UNION	-- Active students since yesterday
-SELECT CONCAT('Enrolled students who have started since yesterday (', DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), "%m/%d/%y"), '): ') AS 'Student Type'
+-- Active students since yesterday
+UNION
+SELECT DATE_FORMAT(CURDATE(), 'Enrolled students who have started since %M 1st:') AS 'Student Type'
     , COUNT(DISTINCT S.idNumber) AS Count
     
-FROM Students S
-	, Registrations R
+FROM Students S, Registrations R
 
 WHERE S.isActive = 1
 	AND S.<ADMINID>
 	AND R.studentId=S.studentId
-	AND R.regStatus = 1 AND R.isActive = 1 AND R.startDate < CURDATE()
+	AND R.regStatus = 1 AND R.isActive = 1 AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 	AND S.studentId Not In (Select Distinct L.studentId From LeavesOfAbsence L WHERE L.isActive = 1 AND (leaveDate < Now() AND (L.returnDate IS NULL OR L.returnDate > NOW())) AND L.<ADMINID>)
 	AND S.firstName NOT LIKE '%test%'
 
-
-UNION	-- New Starts in the current month
+-- New Starts in the current month
+UNION
 SELECT COALESCE(CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR), '&type=spquery">New starts in ', DATE_FORMAT(CURDATE(), '%M'), ' (link to list):</a>'), CONCAT('New starts in ', DATE_FORMAT(CURDATE(), '%M:'))) AS 'Student Type'
 	, COALESCE(COUNT(DISTINCT S.idNumber), 0)
     
 FROM Students S
-INNER JOIN Registrations R
-	ON R.studentId = S.studentId
-    AND R.enrollmentSemesterId = 4000441
+INNER JOIN Registrations R ON R.studentId = S.studentId AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
 LEFT JOIN CustomStartPageQueries Q
 	ON Q.adminid = R.adminid AND Q.userType = 4 AND Q.queryTitle = 'New Start Students In the Current Month'
 
 WHERE S.isActive = 1
-	AND R.isActive = 1
+	AND R.regStatus = 1
 	AND S.firstName NOT LIKE '%test%' AND S.lastName NOT LIKE '%test%'
-    AND R.startDate <= CURDATE() AND R.startDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+    AND R.startDate >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     AND S.<ADMINID>
 
 /*
@@ -66,14 +62,12 @@ SELECT CONCAT('Graduated in ', DATE_FORMAT(CURDATE(), '%M'), ': ') AS 'Student T
 	, COUNT(DISTINCT S.idNumber)
 
 FROM Students S
-INNER JOIN Registrations R
-	ON R.studentId = S.studentId
-    AND R.enrollmentSemesterId = 4000441
+INNER JOIN Registrations R ON R.studentId = S.studentId AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId
 
 WHERE S.isActive = 3
-	AND S.firstName NOT LIKE '%test%' AND S.lastName NOT LIKE '%test%'
-    AND R.graduationDate <= CURDATE() AND R.graduationDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
     AND S.<ADMINID>
+    AND R.graduationDate >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
 
 
 UNION	-- LOA in the current month
@@ -101,9 +95,8 @@ SELECT CONCAT('Dropped/Withdrew in ', DATE_FORMAT(CURDATE(), '%M'), ': ') AS 'St
 FROM Students S
 INNER JOIN Registrations R
 	ON R.studentId = S.studentId
-    AND R.enrollmentSemesterId = 4000441
 
 WHERE S.isActive = 0
 	AND S.firstName NOT LIKE '%test%' AND S.lastName NOT LIKE '%test%'
-    AND R.graduationDate <= CURDATE() AND R.graduationDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+    AND R.graduationDate >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     AND S.<ADMINID>
