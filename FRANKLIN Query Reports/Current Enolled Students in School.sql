@@ -2,48 +2,48 @@
 -- Author: Kelly MJ    |    Creation date: 7/20/18
 -- Allows user to select date range, then displays students who were enrolled during that date range.
 
-SELECT 'Student Count: ' AS 'Student ID'          -- student ID
-     , COUNT(S.idNumber) AS 'Name' -- student name
-     , NULL AS 'Program Name'              -- program name
-     , NULL AS 'Contract Start Date - End Date'                  -- start to graduation dates
-     
-FROM Students S
-   , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
-      GROUP BY REG.studentId) R
-   , Programmes P
-   , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
-      GROUP BY R.studentId) RA
-      
-WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  -- student ID criteria
-  AND P.programmeId = R.programmeId                                            -- programme matching
-  AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
-						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
-                          AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]')) AND L.<ADMINID>)
-  AND S.<ADMINID>
-  AND R.startDate <= '[?End Date]'                         -- start date
-  AND RA.endDate > '[?Start Date]'                         -- end date
+SELECT t1.idNumber 'Student ID'                     -- student ID
+     , t1.Name                                      -- student name
+     , t1.programmeName 'Program Name'               -- program name
+     , IF(t1.status = 1, 'Enrolled', t1.statusName) 'Status'
+     , t1.dateRange 'Contract Start Date - Actual End Date'
 
-UNION
-
-(SELECT DISTINCT S.studentId 'Student ID'           -- student ID
-     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.firstName AS CHAR), ' ', CAST(S.lastName AS CHAR), '</a>') AS Name -- student name
-     , P.programmeName 'Program Name'              -- program name
-     , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  ', DATE_FORMAT(RA.endDate, "%m/%d/%Y")) 'Contract Start Date - End Date'
-     
-FROM Students S
-   , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
-      GROUP BY REG.studentId) R
-   , Programmes P
-   , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
-      GROUP BY R.studentId) RA
-      
-WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  -- student ID criteria
-  AND P.programmeId = R.programmeId                                            -- programme matching
-  AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
-						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
-                          AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]'))  AND L.<ADMINID>)
-  AND S.<ADMINID>
-  AND R.startDate <= '[?End Date]'
-  AND RA.endDate > '[?Start Date]'
+FROM (
+  -- currently active students
+  SELECT DISTINCT S.idNumber
+       , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.lastName AS CHAR), ', ', CAST(S.firstName AS CHAR), '</a>') AS Name -- student name
+       , P.programmeName
+       , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  N/A') AS dateRange
+       , S.isActive AS status
+       , SS.statusName
        
-ORDER BY R.startDate ASC)
+  FROM Students S
+  INNER JOIN ( SELECT studentId, MAX(startDate) AS maxDate FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
+  INNER JOIN Registrations R ON R.studentId = S.studentId AND R.startDate = RR.maxDate AND R.isActive = 1 AND R.regStatus = 1
+  INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
+  INNER JOIN StatusSequences SS ON SS.statusId = S.isActive AND SS.<ADMINID>  -- active status codes have adminid=48
+
+  WHERE S.isActive = 1
+    AND S.<ADMINID>
+
+
+  -- students who have graduated/dropped within the current period
+  UNION
+  SELECT DISTINCT S.idNumber
+       , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.lastName AS CHAR), ', ', CAST(S.firstName AS CHAR), '</a>') AS Name -- student name
+       , P.programmeName
+       , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  ', DATE_FORMAT(R.graduationDate, "%m/%d/%Y")) dateRange
+       , S.isActive AS status
+       , SS.statusName
+
+  FROM Students S
+  INNER JOIN ( SELECT studentId, MAX(startDate) AS maxDate FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
+  INNER JOIN Registrations R ON R.studentId = S.studentId AND R.startDate = RR.maxDate AND R.isActive = 1
+  INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
+  INNER JOIN StatusSequences SS ON SS.statusId = S.isActive AND SS.<ADMINID>  -- active status codes have adminid=48
+
+  WHERE S.isActive IN (0, 3)
+    AND S.<ADMINID>
+    AND R.graduationDate BETWEEN '[?Start Date]' AND '[?End Date]'
+    AND R.startDate <= '[?End Date]'
+) t1
