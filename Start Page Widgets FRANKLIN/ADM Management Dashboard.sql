@@ -15,9 +15,9 @@ WHERE S.<ADMINID>
 	AND S.isActive = 1
 	AND R.regStatus = 1
 
--- Active students since yesterday
+-- Active students since 1st of the month
 UNION
-SELECT DATE_FORMAT(CURDATE(), 'Enrolled students who have started since %M 1st:') AS 'Student Type'
+SELECT DATE_FORMAT(CURDATE(), 'Students who were enrolled before %M 1st:') AS 'Student Type'
     , COUNT(DISTINCT S.idNumber) AS Count
     
 FROM Students S, Registrations R
