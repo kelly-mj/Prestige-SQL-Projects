@@ -1,7 +1,5 @@
--- ADMIN (widget #230) New Start Students Within the Past Month
+-- AOHD ADMIN  New Start Students Within the Past Month
 -- Kelly MJ  |  9/10/2018
--- Update Kelly MJ 9/14/2018: Added sort by campus
--- Update Kelly MJ 9/24/2018: Changed date range from 'weekly' to 'since first day of the month'
 
 /*
  *	Austin (78741)
