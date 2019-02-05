@@ -69,7 +69,7 @@ INNER JOIN Registrations R
 	ON R.studentId = S.studentId
     AND R.enrollmentSemesterId = 4000441
 LEFT JOIN CustomStartPageQueries Q
-	ON Q.isActive = S.isActive AND Q.queryTitle = 'New Start Students In the Current Month'
+	ON Q.isActive = S.isActive AND Q.queryTitle = 'New Start Students in the Current Month'
 
 WHERE S.isActive = 1
 	AND R.isActive = 1
