@@ -1,8 +1,10 @@
+-- FOR SCHOOLS WITH MULTIPLE CAMPUSES - TO REMOVE CAMPUS COLUMN, COPY CODE FROM SCHOOL WITH SINGLE CAMPUS
 -- 1. Current Enrolled Students in School
 -- Author: Kelly MJ    |    Creation date: 7/20/18
 -- Allows user to select date range, then displays students who were enrolled during that date range.
 
-SELECT t1.idNumber 'Student ID'                     -- student ID
+SELECT 
+     , t1.idNumber 'Student ID'                     -- student ID
      , t1.Name                                      -- student name
      , t1.programmeName 'Program Name'              -- program name
      , IF(t1.status = 1, 'Enrolled', t1.statusName) 'Status'
