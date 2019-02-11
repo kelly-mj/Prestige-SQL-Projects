@@ -82,7 +82,9 @@ FROM (
  *	List of new starts. Date range restricted to the current month.	*
  ********************************************************************/
 UNION (
-SELECT DATE_FORMAT(CURDATE(), 'New starts in %M'), COUNT(S.studentId)
+SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST((SELECT queryId FROM CustomStartPageQueries WHERE queryTitle = 'New Start Students in the Current Month') AS CHAR), '&type=spquery">', DATE_FORMAT(CURDATE(), 'New Starts in %M</a>'))
+-- DATE_FORMAT(CURDATE(), 'New starts in %M')
+	, COUNT(S.studentId)
 
 FROM Students S
 INNER JOIN ( SELECT studentId, MAX(startDate) AS maxDate FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR ON RR.studentId = S.studentId
