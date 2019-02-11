@@ -9,7 +9,7 @@
 	, COUNT(S.studentId) AS Count
 
 FROM Students S
-INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
+INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
 ON RR.studentId = S.studentId
 INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
 INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
@@ -36,7 +36,7 @@ SELECT t1.*
 
 FROM (
 	-- Currently enrolled students (NO LOA)
-	( SELECT 'Enrolled students at the start of the month - no LOA', COUNT(S.studentId)
+	( SELECT DATE_FORMAT(CURDATE(), 'Enrolled students at the start of %M - no LOA'), COUNT(S.studentId)
 	FROM Students S
 	INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
 	ON RR.studentId = S.studentId
@@ -55,7 +55,7 @@ FROM (
 
 	-- Currently LOA students (NO just enrolled)
 	UNION (
-	SELECT 'LOA students at the start of the month', COUNT(S.studentId)
+	SELECT DATE_FORMAT(CURDATE(), 'LOA students in %M'), COUNT(S.studentId)
 	FROM Students S
 	INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
 	ON RR.studentId = S.studentId
@@ -80,8 +80,8 @@ FROM (
 /********************************************************************
  *	List of new starts. Date range restricted to the current month.	*
  ********************************************************************/
-UNION
-SELECT 'New starts this month', COUNT(S.studentId)
+UNION (
+SELECT DATE_FORMAT(CURDATE(), 'New starts in %M'), COUNT(S.studentId)
 
 FROM Students S
 INNER JOIN ( SELECT studentId, MAX(startDate) AS maxDate FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR ON RR.studentId = S.studentId
@@ -92,14 +92,14 @@ WHERE S.<ADMINID>
 	AND S.firstName NOT LIKE '%test%'
     AND R.startDate <= CURDATE() AND R.startDate > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
     AND S.isActive = 1
-    AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
+    AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
 
 
 /********************************************************************
  *	List of graduates. Date range restricted to the current month.	*
  ********************************************************************/
-UNION
-SELECT 'Graduated this month', COUNT(S.studentId)
+UNION (
+SELECT DATE_FORMAT(CURDATE(), 'Graduated in %M'), COUNT(S.studentId)
 FROM Students S
 INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
 ON RR.studentId = S.studentId
@@ -114,14 +114,14 @@ WHERE S.<ADMINID>
 	AND S.studentId NOT IN ( SELECT L.studentId		-- Make sure student isn't on LOA
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
-		WHERE L.leaveDate < DATE_FORMAT(CURDATE(), '%Y-%m-01') AND L.returnDate IS NULL )
+		WHERE L.leaveDate < DATE_FORMAT(CURDATE(), '%Y-%m-01') AND L.returnDate IS NULL ) )
 
 
 /********************************************************
  *	List of withdrawn students in the current month.	*
  ********************************************************/
-UNION
-SELECT 'Withdrew this month', COUNT(S.studentId)
+UNION (
+SELECT DATE_FORMAT(CURDATE(), 'Withdrew in %M'), COUNT(S.studentId)
 FROM Students S
 INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
 ON RR.studentId = S.studentId
@@ -136,14 +136,14 @@ WHERE S.<ADMINID>
 	AND S.studentId NOT IN ( SELECT L.studentId		-- Make sure student isn't on LOA
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
-		WHERE L.leaveDate < DATE_FORMAT(CURDATE(), '%Y-%m-01') AND L.returnDate IS NULL )
+		WHERE L.leaveDate < DATE_FORMAT(CURDATE(), '%Y-%m-01') AND L.returnDate IS NULL ) )
 
 
 /************************************************************
  *	List of students who left on LOA in the current month.	*
  ************************************************************/
-UNION
-SELECT 'Left on LOA this month',  COUNT(S.studentId)
+UNION (
+SELECT DATE_FORMAT(CURDATE(), 'Left on LOA in %M'),  COUNT(S.studentId)
 	FROM Students S
 	INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
 	ON RR.studentId = S.studentId
@@ -161,14 +161,14 @@ SELECT 'Left on LOA this month',  COUNT(S.studentId)
 		AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 		AND (R.graduationDate IS NULL OR R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE()))
 		AND S.firstName NOT LIKE '%test%'
-		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
+		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
 
 
 /********************************************************************
  *	List of students who returned from LOA in the current month.	*
  ********************************************************************/
-UNION
-SELECT 'Returned from LOA this month', COUNT(S.studentId)
+UNION (
+SELECT DATE_FORMAT(CURDATE(), 'Returned from LOA in %M'), COUNT(S.studentId)
 	FROM Students S
 	INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR ON RR.studentId = S.studentId
 	INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
@@ -184,4 +184,30 @@ SELECT 'Returned from LOA this month', COUNT(S.studentId)
 		AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 		AND (R.graduationDate IS NULL OR R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE()))
 		AND S.firstName NOT LIKE '%test%'
-		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
+		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
+
+
+/********************************************************************
+ *	List of all active students 									*
+ ********************************************************************/
+UNION
+( SELECT '<strong>All currently active students</strong>' AS 'Report Type'
+	, CONCAT('<strong>', COUNT(S.studentId), '</strong>') AS Count
+
+FROM Students S
+INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
+ON RR.studentId = S.studentId
+INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
+LEFT JOIN ( 
+	SELECT L.studentId, L.leaveDate, L.returnDate
+	FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
+	INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
+	) LOA ON LOA.studentId = S.studentId
+
+WHERE S.<ADMINID>
+	AND S.isActive IN (1)
+	AND R.regStatus IN (1)
+	AND R.startDate <= CURDATE()
+	AND S.firstName NOT LIKE '%test%'
+	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
