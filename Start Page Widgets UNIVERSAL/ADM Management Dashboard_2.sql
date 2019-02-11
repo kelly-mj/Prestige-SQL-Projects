@@ -6,15 +6,15 @@
  *	No date restriction.																*
  ****************************************************************************************/
 
-( SELECT 'All enrolled students at the moment' AS 'Report Type'
-	, COUNT(S.studentId) AS Count
+( SELECT '<strong>All enrolled students (including LOA)</strong>' AS 'Report Type'
+	, CONCAT('<strong>', COUNT(S.studentId), '</strong>') AS Count
 
 FROM Students S
 INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
 ON RR.studentId = S.studentId
 INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
 INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-LEFT JOIN ( 
+LEFT JOIN (
 	SELECT L.studentId, L.leaveDate, L.returnDate
 	FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 	INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -23,6 +23,32 @@ LEFT JOIN (
 WHERE S.<ADMINID>
 	AND S.isActive IN (1, 12)
 	AND R.regStatus IN (1, 12)
+	AND R.startDate <= CURDATE()
+	AND S.firstName NOT LIKE '%test%'
+	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
+
+
+/****************************************************
+ *	List of all active students 					*
+ ****************************************************/
+UNION
+( SELECT '<strong>All currently active students (excluding LOA)</strong>' AS 'Report Type'
+	, CONCAT('<strong>', COUNT(S.studentId), '</strong>') AS Count
+
+FROM Students S
+INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
+ON RR.studentId = S.studentId
+INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
+LEFT JOIN (
+	SELECT L.studentId, L.leaveDate, L.returnDate
+	FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
+	INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
+	) LOA ON LOA.studentId = S.studentId
+
+WHERE S.<ADMINID>
+	AND S.isActive IN (1)
+	AND R.regStatus IN (1)
 	AND R.startDate <= CURDATE()
 	AND S.firstName NOT LIKE '%test%'
 	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
@@ -48,7 +74,7 @@ FROM (
 		AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 		AND (R.graduationDate IS NULL OR R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE()))
 		AND S.firstName NOT LIKE '%test%'
-		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) 
+		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
 		AND S.studentId NOT IN ( SELECT L.studentId
 			FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 			INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -62,7 +88,7 @@ FROM (
 	ON RR.studentId = S.studentId
 	INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-	INNER JOIN ( 
+	INNER JOIN (
 		SELECT L.studentId, L.leaveDate, L.returnDate
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -113,7 +139,7 @@ WHERE S.<ADMINID>
 	AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 	AND R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE())
 	AND S.firstName NOT LIKE '%test%'				-- exclude test students in the system
-	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) 
+	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
 	AND S.studentId NOT IN ( SELECT L.studentId		-- Make sure student isn't on LOA
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -135,7 +161,7 @@ WHERE S.<ADMINID>
 	AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
 	AND R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE())
 	AND S.firstName NOT LIKE '%test%'				-- exclude test students in the system
-	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) 
+	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
 	AND S.studentId NOT IN ( SELECT L.studentId		-- Make sure student isn't on LOA
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -152,7 +178,7 @@ SELECT DATE_FORMAT(CURDATE(), 'Left on LOA in %M'),  COUNT(S.studentId)
 	ON RR.studentId = S.studentId
 	INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-	INNER JOIN ( 
+	INNER JOIN (
 		SELECT L.studentId, L.leaveDate, L.returnDate
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -176,7 +202,7 @@ SELECT DATE_FORMAT(CURDATE(), 'Returned from LOA in %M'), COUNT(S.studentId)
 	INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR ON RR.studentId = S.studentId
 	INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-	INNER JOIN ( 
+	INNER JOIN (
 		SELECT L.studentId, L.leaveDate, L.returnDate
 		FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
 		INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
@@ -188,29 +214,3 @@ SELECT DATE_FORMAT(CURDATE(), 'Returned from LOA in %M'), COUNT(S.studentId)
 		AND (R.graduationDate IS NULL OR R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE()))
 		AND S.firstName NOT LIKE '%test%'
 		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
-
-
-/********************************************************************
- *	List of all active students 									*
- ********************************************************************/
-UNION
-( SELECT '<strong>All currently active students</strong>' AS 'Report Type'
-	, CONCAT('<strong>', COUNT(S.studentId), '</strong>') AS Count
-
-FROM Students S
-INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
-ON RR.studentId = S.studentId
-INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
-INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-LEFT JOIN ( 
-	SELECT L.studentId, L.leaveDate, L.returnDate
-	FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
-	INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
-	) LOA ON LOA.studentId = S.studentId
-
-WHERE S.<ADMINID>
-	AND S.isActive IN (1)
-	AND R.regStatus IN (1)
-	AND R.startDate <= CURDATE()
-	AND S.firstName NOT LIKE '%test%'
-	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
