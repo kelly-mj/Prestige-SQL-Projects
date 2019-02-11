@@ -124,9 +124,9 @@ WHERE S.<ADMINID>
     AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
 
 
-/********************************************************************
- *	List of graduates. Date range restricted to the current month.	*
- ********************************************************************/
+/****************************************************************************************
+ *	List of graduates and pending grads. Date range restricted to the current month.	*
+ ****************************************************************************************/
 UNION (
 SELECT DATE_FORMAT(CURDATE(), 'Graduated in %M'), COUNT(S.studentId)
 FROM Students S
@@ -135,9 +135,9 @@ ON RR.studentId = S.studentId
 INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
 INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
 WHERE S.<ADMINID>
-	AND S.isActive = 3								-- graduated status code
 	AND R.startDate < DATE_FORMAT(CURDATE(), '%Y-%m-01')
-	AND R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE())
+	AND (  ( S.isActive = 3 AND R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE()) )
+		OR ( S.isActive = 17 AND ( (R.graduationDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND LAST_DAY(CURDATE())) OR (R.endDate BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()) ) )  )
 	AND S.firstName NOT LIKE '%test%'				-- exclude test students in the system
 	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' )
 	AND S.studentId NOT IN ( SELECT L.studentId		-- Make sure student isn't on LOA
