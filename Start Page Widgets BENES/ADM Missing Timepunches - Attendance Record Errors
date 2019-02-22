@@ -1,0 +1,34 @@
+-- ADM Missing Timepunches - Attendance Record Errors
+-- Kelly MJ  |  2/22/2019
+
+SELECT DATE_FORMAT(A.attendanceDate, '%m/%d/%Y') 'Attendance Date'
+	, CONCAT('<a target="_blank" href="admin_view_student_attendance_record.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Name'
+	, C.className 'Class'
+	, IF(A.present = 1, 'Present', 'Absent') 'Marked as'
+	, CONCAT(FORMAT(A.duration, 2), ' Hrs') 'Duration'
+	, A.attendanceClockPunch 'Clock Punches'
+
+FROM Students S
+
+INNER JOIN ( SELECT studentId, MAX(registrationId) maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId ) RR
+
+INNER JOIN Registrations R ON R.studentId = S.studentId
+	AND R.registrationId = RR.maxReg
+
+INNER JOIN Attendance A ON A.studentId = S.studentId
+	AND ( (A.present <> 1 AND A.attendanceClockPunch > "1") OR (A.present = 1 AND A.duration = 0) )
+
+INNER JOIN ClassStudentReltn CSR ON CSR.studentId = S.studentId
+	AND CSR.classId = A.classId
+
+INNER JOIN Classes C ON C.classId = A.classId
+
+WHERE S.<ADMINID>
+	AND S.isActive IN (1, 3, 12)
+	AND A.attendanceDate < CURDATE()
+	AND A.attendanceDate >= DATE_FORMAT(CURDATE(), '%Y-01-01')
+	AND CSR.isActive = 1
+	AND C.isActive = 1
+
+ORDER BY A.attendanceDate, S.lastName
+LIMIT 1000
