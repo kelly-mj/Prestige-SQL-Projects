@@ -8,9 +8,11 @@ SELECT t1.idNumber
 
 FROM (
 	SELECT S.idNumber
-		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.firstName, ' ', S.lastName, '</a>') AS Name
+		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+		, S.lastName
 		, P.programmeName AS Program
 		, DATE_FORMAT(R.startDate, '%m/%d/%Y') AS startDate
+		, R.startDate AS start
 		, ( SELECT COUNT(C.campusId) FROM Campuses C WHERE C.<ADMINID> AND C.isActive = 1 ) AS campusNum
 
 	FROM Students S
@@ -25,6 +27,8 @@ FROM (
     ) t1
 
 GROUP BY CASE t1.campusNum
-	WHEN 1 THEN t1.idNumber
-	ELSE t1.campusNum
-	END
+			WHEN 1 THEN t1.idNumber
+			ELSE t1.campusNum
+			END
+
+ORDER BY t1.Program, t1.start, t1.lastName
