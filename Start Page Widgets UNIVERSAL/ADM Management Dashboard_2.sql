@@ -1,38 +1,11 @@
--- [U] ADMIN Widget: Management Dashboard
+-- [U] ADMIN Widget: Management Dashboard (V2)
 -- Kelly MJ  |  2/11/2019
 
-/****************************************************************************************
- *	List of all enrolled students, including LOA. Lists registration and LOA details.	*
- *	No date restriction.																*
- ****************************************************************************************/
+/********************************************************************
+ *	List of all active students 									*
+ ********************************************************************/
 
-( SELECT '<strong>All enrolled students (including LOA)</strong>' AS 'Report Type'
-	, CONCAT('<strong>', COUNT(S.studentId), '</strong>') AS Count
-
-FROM Students S
-INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
-ON RR.studentId = S.studentId
-INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
-INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-LEFT JOIN (
-	SELECT L.studentId, L.leaveDate, L.returnDate
-	FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
-	INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
-	) LOA ON LOA.studentId = S.studentId
-
-WHERE S.<ADMINID>
-	AND S.isActive IN (1, 12)
-	AND R.regStatus IN (1, 12)
-	AND R.startDate <= CURDATE()
-	AND S.firstName NOT LIKE '%test%'
-	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
-
-
-/****************************************************
- *	List of all active students 					*
- ****************************************************/
-UNION
-( SELECT '<strong>All currently active students (excluding LOA)</strong>' AS 'Report Type'
+( SELECT '<strong>All Currently Active Students</strong>' AS 'Report Type'
 	, CONCAT('<strong>', COUNT(S.studentId), '</strong>') AS Count
 
 FROM Students S
@@ -56,8 +29,36 @@ WHERE S.<ADMINID>
 
 /****************************************************************************************
  *	List of all enrolled students, including LOA. Lists registration and LOA details.	*
+ *	No date restriction.																*
+ ****************************************************************************************/
+/*
+( SELECT 'All enrolled students at the moment' AS 'Report Type'
+	, COUNT(S.studentId) AS Count
+
+FROM Students S
+INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
+ON RR.studentId = S.studentId
+INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
+INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
+LEFT JOIN (
+	SELECT L.studentId, L.leaveDate, L.returnDate
+	FROM ( SELECT studentId, MAX(leavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence WHERE isActive = 1 GROUP BY studentId ) LL
+	INNER JOIN LeavesOfAbsence L ON L.studentId = LL.studentId AND L.leavesOfAbsenceId = LL.maxLOA
+	) LOA ON LOA.studentId = S.studentId
+
+WHERE S.<ADMINID>
+	AND S.isActive IN (1, 12)
+	AND R.regStatus IN (1, 12)
+	AND R.startDate <= CURDATE()
+	AND S.firstName NOT LIKE '%test%'
+	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
+*/
+
+/****************************************************************************************
+ *	List of all enrolled students, including LOA. Lists registration and LOA details.	*
  *	Date range restricted to the current month.											*
  ****************************************************************************************/
+/*
 UNION (
 SELECT t1.*
 
@@ -102,7 +103,7 @@ FROM (
 		AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
 	) t1
 )
-
+*/
 
 /********************************************************************
  *	List of new starts. Date range restricted to the current month.	*
