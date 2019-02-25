@@ -3,9 +3,8 @@
 
 SELECT DATE_FORMAT(CP.punchDate, '%m/%d/%Y') 'Attendance Date'
 	, CONCAT('<a target="_blank" href="view_attendance.jsp?semesterid=', CAST(R.enrollmentSemesterId AS CHAR), '&classid=', CAST(CSR.classId AS CHAR), '&subjectid=', CAST(A.subjectId AS CHAR), '&studentid=', CAST(S.studentId AS CHAR), '">', S.firstName, ' ', S.lastName, '</a>') AS 'Student Name'
-	, C.className
+	, C.className 'Class'
 	, CP.punchTimes
-	, R.registrationId, A.attendanceId, CP.clockPunchId, CSR.classStudentReltnId, C.classId
 
 FROM Students S
 

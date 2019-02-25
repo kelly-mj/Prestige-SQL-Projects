@@ -3,7 +3,7 @@
 
 /* Count of students with an uncorrected, odd number of clock punches for a particular date */
 	-- students who have an odd number of clock punches AND their clock punches were not corrected in post attendance
-(SELECT ''
+(SELECT (SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(queryId AS CHAR), '&type=spquery">', queryTitle,'</a>') FROM CustomStartPageQueries WHERE queryTitle = 'Students Missing Clock Outs') AS 'Report Type'
 	, COUNT(CP.clockPunchId) AS Count
 
 FROM Students S
@@ -42,7 +42,8 @@ WHERE S.<ADMINID>
 	-- students who were not marked as present, but have a nonzero duration
 	-- students who were not marked as present, but have at least 1 clock punch
 UNION (
-SELECT COUNT(A.attendanceId) AS Count
+SELECT (SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(queryId AS CHAR), '&type=spquery">', queryTitle,'</a>') FROM CustomStartPageQueries WHERE queryTitle = 'Attendance Record Errors') AS 'Report Type'
+	, COUNT(A.attendanceId) AS Count
 
 FROM Students S
 

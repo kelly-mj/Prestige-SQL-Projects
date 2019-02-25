@@ -4,9 +4,9 @@
 SELECT DATE_FORMAT(A.attendanceDate, '%m/%d/%Y') 'Attendance Date'
 	, CONCAT('<a target="_blank" href="admin_view_student_attendance_record.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Name'
 	, C.className 'Class'
-	, IF(A.present = 1, 'Present', 'Absent') 'Marked as'
 	, CONCAT(FORMAT(A.duration, 2), ' Hrs') 'Duration'
 	, A.attendanceClockPunch 'Clock Punches'
+	, IF(A.present = 1, 'Present', 'Absent') 'Marked as'
 
 FROM Students S
 
