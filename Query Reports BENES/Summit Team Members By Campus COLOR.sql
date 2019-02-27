@@ -14,7 +14,7 @@ INNER JOIN Teachers T
 		ON T.TeacherID = PVF.userID
 WHERE
     PVF.usertype = 3
-	AND FieldName = 'Team_name'
+	AND FieldName = 'TEAM_TENACIOUS'
 	AND PVF.isActive = 1
     AND T.Isactive = 1
     AND T.CampusCode =  34652
@@ -82,7 +82,7 @@ INNER JOIN Teachers T
 		ON T.TeacherID = PVF.userID
 WHERE
     PVF.usertype = 3
-	AND FieldName = 'Team_name'
+	AND FieldName = 'TEAM_TENACIOUS'
 	AND PVF.isActive = 1
     AND T.Isactive = 1
     AND T.CampusCode =  34606
@@ -150,7 +150,7 @@ INNER JOIN Teachers T
 		ON T.TeacherID = PVF.userID
 WHERE
     PVF.usertype = 3
-	AND FieldName = 'Team_name'
+	AND FieldName = 'TEAM_TENACIOUS'
 	AND PVF.isActive = 1
     AND T.Isactive = 1
     AND T.CampusCode =  34601
