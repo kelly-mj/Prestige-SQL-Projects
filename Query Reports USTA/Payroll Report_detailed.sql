@@ -9,12 +9,18 @@
 SELECT t1.TeacherID
   , t1.Name AS 'Staff Member Name'       
   , t1.DOW AS 'Day Of The Week'
-  , t1.ATDate AS 'Attendance Date'
+  , DATE_FORMAT(t1.ATDate, '%m/%d/%Y') AS 'Attendance Date'
   , CP.punchTimes
+  /* -- display rounded clock punches, which apparently don't exist in TeacherAttendance and SubAdminAttendance tables
+  , CASE t1.isTeacher
+        WHEN 1 THEN (SELECT A.attendanceClockPunch FROM TeacherAttendance  A WHERE A.teacherId  = t1.TeacherID AND A.attendanceDate = t1.ATDate)
+        WHEN 1 THEN (SELECT A.attendanceClockPunch FROM SubAdminAttendance A WHERE A.subAdminId = t1.teacherID AND A.attendanceDate = t1.ATDate)
+        ELSE ' ' END AS 'Rounded Punches'
+  */
   , CONCAT(BT.fieldValue, ' min') 'Break Time'
-  , CAST((t1.duration - BT.breakTime) AS CHAR) AS Duration
+  , CAST(ROUND((t1.duration - BT.breakTime), 2) AS CHAR) AS Duration
   -- , CONCAT(CAST(t1.duration AS CHAR), ' - ', CAST(BT.breakTime AS CHAR), ' = ', CAST(t1.duration-BT.breakTime AS CHAR))
- 
+
 FROM
       (SELECT T.teacherID AS TeacherID
         , CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
@@ -25,15 +31,16 @@ FROM
         , MAX(TA.teacherAttendanceId)
         , TA.reasonType
         , TA.reasonText
+        , 1 AS isTeacher
        FROM TeacherAttendance TA
-       INNER JOIN Teachers T 
+       INNER JOIN Teachers T
            ON TA.teacherID = T.teacherID
        WHERE DATE(TA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
          AND TA.isactive = 1
          and T.isactive = 1
          AND (duration > 0 OR TA.reasonType > 0 OR TA.reasonText > 'a')
          AND T.<ADMINID>
-       GROUP BY T.teacherID, TA.attendancedate  
+       GROUP BY T.teacherID, TA.attendancedate
 UNION
        SELECT SA.SubadminID AS TeacherID
        , CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
@@ -44,14 +51,15 @@ UNION
        , MAX(SAA.subAdminAttendanceId)
        , SAA.reasonType
        , SAA.reasonText
+       , 0 AS isTeacher
        FROM SubAdminAttendance SAA
-       INNER JOIN SubAdmins SA 
+       INNER JOIN SubAdmins SA
        ON SA.SubAdminID = SAA.SubAdminID
        WHERE DATE(SAA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
-         AND SAA.isactive = 1 
-         and SA.isactive = 1 
-         AND (duration > 0 OR SAA.reasonType > 0 OR SAA.reasonText > 'a') 
-         AND SA.<ADMINID> 
+         AND SAA.isactive = 1
+         and SA.isactive = 1
+         AND (duration > 0 OR SAA.reasonType > 0 OR SAA.reasonText > 'a')
+         AND SA.<ADMINID>
          GROUP BY SA.subAdminID, SAA.attendanceDate
              ) AS t1
 
@@ -73,8 +81,8 @@ INNER JOIN (
   FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' ) BT    -- Break Time
   ON BT.userId = t1.TeacherId
 
-UNION  
-SELECT t3.TeacherID, NULL, NULL, NULL, t3.n3, t3.n4, 
+UNION
+SELECT t3.TeacherID, NULL, NULL, NULL, t3.n3, t3.n4, -- NULL,
 CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','',
 CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; background-color: #A8D0E6; font-weight: bold;">','<div align="right">'
 ,t3.Name,"'s" '  Weekly Hours Are','  ', FORMAT(SUM(t3.duration) - COUNT(t3.duration)*BT.fieldValue/60, 2),
@@ -90,14 +98,14 @@ FROM (
         , NULL AS n3
         , NULL AS n4
        FROM TeacherAttendance TA
-       INNER JOIN Teachers T 
+       INNER JOIN Teachers T
            ON TA.teacherID = T.teacherID
        WHERE DATE(TA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
          AND TA.isactive = 1
-         and T.isactive = 1  
+         and T.isactive = 1
          AND (duration > 0 OR TA.reasonType > 0)
          AND T.<ADMINID>
-       GROUP BY T.teacherID, TA.attendancedate  
+       GROUP BY T.teacherID, TA.attendancedate
 UNION
        SELECT SA.SubadminID AS TeacherID
        , CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
@@ -108,13 +116,13 @@ UNION
        , NULL AS n3
        , NULL AS n4
        FROM SubAdminAttendance SAA
-       INNER JOIN SubAdmins SA 
+       INNER JOIN SubAdmins SA
        ON SA.SubAdminID = SAA.SubAdminID
        WHERE DATE(SAA.attendancedate)  BETWEEN '[?Start Date]' AND '[?End Date]'
-         AND SAA.isactive = 1 
-         and SA.isactive = 1 
-         AND (duration > 0 OR SAA.reasonType > 0) 
-         AND SA.<ADMINID> 
+         AND SAA.isactive = 1
+         and SA.isactive = 1
+         AND (duration > 0 OR SAA.reasonType > 0)
+         AND SA.<ADMINID>
          GROUP BY SA.subADminID, SAA.attendanceDate
              ) AS t3
 INNER JOIN ProfileFieldValues BT
@@ -122,4 +130,4 @@ INNER JOIN ProfileFieldValues BT
   AND BT.fieldName = 'BREAK_TIME'
 
 GROUP BY TeacherID
-ORDER BY TeacherID 
+ORDER BY TeacherID
