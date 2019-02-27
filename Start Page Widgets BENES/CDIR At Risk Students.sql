@@ -11,7 +11,7 @@ SELECT Name AS 'Student'
 		WHEN 0.250000 THEN '1/4-Time'
 		ELSE 'Unknown' END AS Enrollment
 	, ClassName AS Class
-	, CONCAT('<div align="center">', lda,'</div>') AS 'Last Day Attended'
+	, DATE_FORMAT(lda, '<div align="center">%m/%d/%Y</div>') AS 'Last Day Attended'
 	, CASE
 		WHEN DifD >= 14 AND DifD < 30 THEN CONCAT('<div align="center">','<font color="#ff8f00">', Difd, '</font>','</div>')
 		WHEN DifD >= 30 THEN CONCAT('<div align="center">','<font color="red">', Difd, '</font>','</div>')
