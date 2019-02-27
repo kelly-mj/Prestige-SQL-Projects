@@ -1,43 +1,23 @@
 -- Created by ?? on ??
 -- Edited by Kelly MJ
--- Update: 6/27/2018
-   -- Improved formatting; added comments    
+-- Kelly MJ 6/27/2018: Reformatted; added comments
+-- Kelly MJ 2/27/2019: Re-wrote to use joins instead of subqueries
 
-SELECT Distinct
-    CONCAT('<a href="student_account_ledger.jsp?studentId=', CAST(SDT.studentId AS CHAR), '">', CAST(SDT.firstName AS CHAR), ' ',   CAST(SDT.lastName AS CHAR), '</a>') AS Name
-  , (SELECT programmeName
-     FROM Programmes 
-     WHERE programmeId = R.programmeId) as 'PROGRAM'
-  , ROUND((SELECT balance From StudentLedger 
-           WHERE studentId =SAL.studentId
-           AND registrationId = SAL.registrationId
-           AND itemNo = ITEM.itemNo ), 2) as 'Balance'
-  , DATE_FORMAT((SELECT billingDate 
-                 FROM StudentLedger  
-                 WHERE studentId =SAL.studentId 
-                 AND registrationId = SAL.registrationId 
-                 AND itemNo = ITEM.itemNo ), "%m /%d /%Y") as 'BILLING_DATE'
-  , DATE_FORMAT((Select DATE_ADD(billingDate, INTERVAL 14 DAY) From StudentLedger  Where studentId =SAL.studentId AND registrationId = SAL.registrationId AND itemNo = ITEM.itemNo ), "%m /%d /%Y") as 'DUE DATE'
+SELECT CONCAT('<a target="_blank" href="https://usta.orbund.com/einstein-freshair/student_account_ledger.jsp?studentId=', CAST(SL.studentId AS CHAR), '">', S.firstName, ' ', S.lastName, '</a>') AS Student
+   , (SELECT P.programmeName FROM Programmes P WHERE P.programmeId = R.programmeId) AS 'Program'
+   , SL.balance
+   , DATE_FORMAT(SL.billingDate, '%m/%d/%Y') AS 'Billing Date'
+   , DATE_FORMAT(DATE_ADD(SL.billingDate, INTERVAL 14 DAY), '%m/%d/%Y') AS 'Due Date'
+FROM StudentLedger SL
+INNER JOIN (SELECT studentId, MAX(itemNo) AS maxItem FROM StudentLedger WHERE billingDate <= CURDATE() GROUP BY studentId) SLL
+   ON SLL.studentId = SL.studentId AND SLL.maxItem = SL.itemNo
+INNER JOIN (SELECT DISTINCT studentId, firstName, lastName FROM Students) S ON S.studentId = SL.studentId
+INNER JOIN (SELECT MAX(registrationId) AS maxReg, studentId FROM Registrations WHERE isActive = 1 GROUP BY studentId) RR
+   ON RR.studentId = SL.studentId
+INNER JOIN Registrations R ON R.studentId = SL.studentId
+   AND R.registrationId = RR.maxReg
 
-FROM StudentLedger SAL 
-
-INNER JOIN  Registrations R
-ON R.registrationId = SAL.registrationId
-AND R.studentId = SAL.studentId
-AND R.regStatus = 1
-And R.isActive = 1
-
-INNER JOIN  Students SDT
-ON SDT.studentId = SAL.studentId
-AND S.isActive = 1
-
-INNER JOIN 
-			( SELECT registrationId, MAX(itemNo) 'itemNo'
-			  FROM StudentLedger
-			  WHERE billingDate <= CURDATE() 
-			  GROUP BY registrationId
-			) ITEM
-ON SAL.registrationId = ITEM.registrationId
-
-WHERE SAL.<ADMINID>
-HAVING Balance < 0
+WHERE SL.<ADMINID>
+AND SL.balance < -0.01
+GROUP BY SL.studentId
+LIMIT 1000
