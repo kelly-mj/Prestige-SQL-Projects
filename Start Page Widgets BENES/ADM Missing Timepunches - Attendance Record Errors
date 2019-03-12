@@ -2,11 +2,14 @@
 -- Kelly MJ  |  2/22/2019
 
 SELECT DATE_FORMAT(A.attendanceDate, '%m/%d/%Y') 'Attendance Date'
-	, CONCAT('<a target="_blank" href="admin_view_student_attendance_record.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Name'
+	, CONCAT('<a target="_blank" href="view_attendance.jsp?semesterid=', CAST(R.enrollmentSemesterId AS CHAR), '&classid=', CAST(A.classId AS CHAR), '&subjectid=', CAST(C.subjectId AS CHAR), '&studentid=', CAST(A.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Name'
 	, C.className 'Class'
 	, CONCAT(FORMAT(A.duration, 2), ' Hrs') 'Duration'
 	, A.attendanceClockPunch 'Clock Punches'
 	, IF(A.present = 1, 'Present', 'Absent') 'Marked as'
+	, (SELECT
+		GROUP_CONCAT((CASE CS.dayNum WHEN 0 THEN 'Sun' WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tues' WHEN 3 THEN 'Wed' WHEN 4 THEN 'Th' WHEN 5 THEN 'Fri' WHEN 6 THEN 'Sat' END)
+		ORDER BY dayNum ASC SEPARATOR ', ') FROM ClassSchedules CS WHERE CS.classId = A.classId) AS 'Class Schedule'
 
 FROM Students S
 
