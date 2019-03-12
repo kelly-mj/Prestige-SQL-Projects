@@ -6,7 +6,7 @@
  */
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , NULL AS 'Charge Date'
+    , t1.endDate AS 'Charge Date'
     , t1.payCode 'Paycode'  -- leave blank if nah
     , FORMAT(COALESCE(IF((t1.hours >= 40 OR t1.employeeType LIKE '%Salary%'), 40, t1.hours), 0), 2) 'Hours' -- coalesce to zero
 
@@ -18,6 +18,8 @@ FROM (
         , TYPE.fieldValue AS employeeType
         , 'REG' AS payCode
         , CONCAT(SA.firstName, ' ' , SA.lastName, ' (', CAST(SA.subAdminId AS CHAR), ')') AS name
+        , '[?Start Date]' AS startDate
+        , '[?End Date]' AS endDate
     FROM SubAdmins SA
     LEFT JOIN SubAdminAttendance SAA ON SAA.subAdminId = SA.subAdminId
         AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
@@ -39,6 +41,8 @@ FROM (
         , TYPE.fieldValue AS employeeType
         , 'REG' AS payCode
         , CONCAT(T.firstName, ' ' , T.lastName, ' (', CAST(T.teacherId AS CHAR), ') TEACHER') AS name
+        , '[?Start Date]' AS startDate
+        , '[?End Date]' AS endDate
     FROM Teachers T
     LEFT JOIN TeacherAttendance TA ON TA.teacherId = T.teacherId
         AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
@@ -61,10 +65,10 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , NULL AS chargeDate
+    , '[?End Date]' AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , FORMAT(t1.hours-40, 2) 'Hours'
-    
+
 FROM (
     -- Subadmins
     (SELECT SA.subAdminId AS id
@@ -118,10 +122,10 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , NULL AS chargeDate
+    , '[?End Date]' AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , t1.hours 'Hours'
-    
+
 FROM (
     -- Subadmins
     (SELECT SA.subAdminId AS id
@@ -173,10 +177,10 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , NULL AS chargeDate
+    , '[?End Date]' AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , t1.hours 'Hours'
-    
+
 FROM (
     -- Subadmins
     (SELECT SA.subAdminId AS id
@@ -228,10 +232,10 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , NULL AS chargeDate
+    , '[?End Date]' AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , t1.hours 'Hours'
-    
+
 FROM (
     -- Subadmins
     (SELECT SA.subAdminId AS id
