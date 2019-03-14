@@ -6,7 +6,7 @@
  */
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , t1.endDate AS 'Charge Date'
+    , DATE_FORMAT(t1.endDate, '%m/%d/%Y') AS 'Charge Date'
     , t1.payCode 'Paycode'  -- leave blank if nah
     , FORMAT(COALESCE(IF((t1.hours >= 40 OR t1.employeeType LIKE '%Salary%'), 40, t1.hours), 0), 2) 'Hours' -- coalesce to zero
 
@@ -65,7 +65,7 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , '[?End Date]' AS chargeDate
+    , DATE_FORMAT('[?End Date]', '%m/%d/%Y') AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , FORMAT(t1.hours-40, 2) 'Hours'
 
@@ -122,7 +122,7 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , '[?End Date]' AS chargeDate
+    , DATE_FORMAT('[?End Date]', '%m/%d/%Y') AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , t1.hours 'Hours'
 
@@ -177,7 +177,7 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , '[?End Date]' AS chargeDate
+    , DATE_FORMAT('[?End Date]', '%m/%d/%Y') AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , t1.hours 'Hours'
 
@@ -232,7 +232,7 @@ FROM (
 UNION
 (SELECT t1.name     -- DELETE 'name'
     , t1.employeeId AS employeeId
-    , '[?End Date]' AS chargeDate
+    , DATE_FORMAT('[?End Date]', '%m/%d/%Y') AS chargeDate
     , t1.payCode 'Paycode'  -- leave blank if nah
     , t1.hours 'Hours'
 
