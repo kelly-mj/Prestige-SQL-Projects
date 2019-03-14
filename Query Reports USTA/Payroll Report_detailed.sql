@@ -7,19 +7,13 @@
 -- Added column to display Vacation/Illness reasons
 
 SELECT t1.TeacherID
-  , t1.Name AS 'Staff Member Name'       
+  , t1.Name AS 'Staff Member Name'
   , t1.DOW AS 'Day Of The Week'
   , DATE_FORMAT(t1.ATDate, '%m/%d/%Y') AS 'Attendance Date'
-  , CP.punchTimes
-  /* -- display rounded clock punches, which apparently don't exist in TeacherAttendance and SubAdminAttendance tables
-  , CASE t1.isTeacher
-        WHEN 1 THEN (SELECT A.attendanceClockPunch FROM TeacherAttendance  A WHERE A.teacherId  = t1.TeacherID AND A.attendanceDate = t1.ATDate)
-        WHEN 1 THEN (SELECT A.attendanceClockPunch FROM SubAdminAttendance A WHERE A.subAdminId = t1.teacherID AND A.attendanceDate = t1.ATDate)
-        ELSE ' ' END AS 'Rounded Punches'
-  */
+  , CP.punchTimes 'Un-Rounded Punch Times'
   , CONCAT(BT.fieldValue, ' min') 'Break Time'
-  , CAST(ROUND((t1.duration - BT.breakTime), 2) AS CHAR) AS Duration
-  -- , CONCAT(CAST(t1.duration AS CHAR), ' - ', CAST(BT.breakTime AS CHAR), ' = ', CAST(t1.duration-BT.breakTime AS CHAR))
+  -- formatted daily duration as "hh:mm"
+  , CONCAT(CAST(FLOOR((t1.duration - BT.breakTime)) AS CHAR), ':', LPAD(CAST(FLOOR(60*((t1.duration-BT.breakTime) - FLOOR((t1.duration-BT.breakTime)))) AS CHAR), 2, '0')) AS 'Rounded Duration - Break Time'
 
 FROM
       (SELECT T.teacherID AS TeacherID
@@ -81,18 +75,21 @@ INNER JOIN (
   FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' ) BT    -- Break Time
   ON BT.userId = t1.TeacherId
 
+
 UNION
 SELECT t3.TeacherID, NULL, NULL, NULL, t3.n3, t3.n4, -- NULL,
 CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','',
 CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; background-color: #A8D0E6; font-weight: bold;">','<div align="right">'
-,t3.Name,"'s" '  Weekly Hours Are','  ', FORMAT(SUM(t3.duration) - COUNT(t3.duration)*BT.fieldValue/60, 2),
-CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','','','</td></tr></font></div>')))
+,t3.Name,"'s" '  Weekly Hours Are','  '
+    , CONCAT(CAST(FLOOR(SUM(t3.duration)) AS CHAR), ':', LPAD(CAST(FLOOR(60*(SUM(t3.duration) - FLOOR(SUM(t3.duration)))) AS CHAR), 2, '0'))
+    -- , FORMAT(SUM(t3.duration) - COUNT(t3.duration)*BT.fieldValue/60, 2)      -- original sum (decimal format)
+    , CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','','','</td></tr></font></div>')))
 
 FROM (
     SELECT T.teacherID AS TeacherID
         , CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
         , TA.attendanceDate AS ATdate
-        , (MAX(duration)) AS duration
+        , MAX(duration) - (SELECT fieldValue/60 FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' AND userId = T.teacherId) AS duration
         , T.campusCode AS Campus_Code
         , MAX(TA.teacherAttendanceId)
         , NULL AS n3
@@ -110,7 +107,7 @@ UNION
        SELECT SA.SubadminID AS TeacherID
        , CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
        , SAA.attendanceDate AS ATdate
-       , (MAX(duration) - .5) AS duration
+       , MAX(duration) - (SELECT fieldValue/60 FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' AND userId = SA.subAdminId) AS duration
        , SA.campusCode AS Campus_Code
        , MAX(SAA.subAdminAttendanceId)
        , NULL AS n3
@@ -125,9 +122,6 @@ UNION
          AND SA.<ADMINID>
          GROUP BY SA.subADminID, SAA.attendanceDate
              ) AS t3
-INNER JOIN ProfileFieldValues BT
-  ON BT.userId = t3.TeacherID
-  AND BT.fieldName = 'BREAK_TIME'
 
 GROUP BY TeacherID
 ORDER BY TeacherID
