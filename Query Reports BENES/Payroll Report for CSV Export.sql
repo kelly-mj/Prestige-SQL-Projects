@@ -8,7 +8,13 @@
     , t1.employeeId AS employeeId
     , DATE_FORMAT(t1.endDate, '%m/%d/%Y') AS 'Charge Date'
     , t1.payCode 'Paycode'  -- leave blank if nah
-    , FORMAT(COALESCE(IF((t1.hours >= 40 OR t1.employeeType LIKE '%Salary%'), 40, t1.hours), 0), 2) 'Hours' -- coalesce to zero
+    -- , FORMAT(COALESCE(IF((t1.hours >= 40 OR t1.employeeType LIKE '%Salary%'), 40, t1.hours), 0), 2) 'Hours' -- coalesce to zero
+    , FORMAT(COALESCE(
+        CASE WHEN (t1.hours >= 40 OR t1.employeeType LIKE '%Salary') THEN 40
+             WHEN t1.employeeType LIKE 'Salary - 32 Hours' THEN 32
+             ELSE t1.hours END  -- end CASE
+         , 0)           -- end COALESCE
+      , 2) 'Hours'      -- end FORMAT
 
 FROM (
     -- Subadmins
@@ -25,7 +31,7 @@ FROM (
         AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND SAA.reasonType = 0
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = SA.subAdminId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -44,11 +50,12 @@ FROM (
         , '[?Start Date]' AS startDate
         , '[?End Date]' AS endDate
     FROM Teachers T
-    LEFT JOIN TeacherAttendance TA ON TA.teacherId = T.teacherId
-        AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
-        AND TA.reasonType = 0
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT teacherId, attendanceDate, duration FROM TeacherAttendance
+        WHERE attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]' AND reasonType = 0
+        GROUP BY teacherId, attendanceDate) TA ON TA.teacherId = T.teacherId
+    LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = T.teacherId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -82,7 +89,7 @@ FROM (
         AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND SAA.reasonType = 0
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = SA.subAdminId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -99,11 +106,12 @@ FROM (
         , 'O/T' AS payCode
         , CONCAT(T.firstName, ' ' , T.lastName, ' (', CAST(T.teacherId AS CHAR), ') TEACHER') AS name
     FROM Teachers T
-    LEFT JOIN TeacherAttendance TA ON TA.teacherId = T.teacherId
-        AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
-        AND TA.reasonType = 0
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT teacherId, attendanceDate, duration FROM TeacherAttendance
+        WHERE attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]' AND reasonType = 0
+        GROUP BY teacherId, attendanceDate) TA ON TA.teacherId = T.teacherId
+    LEFT JOIN (
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = T.teacherId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -139,7 +147,7 @@ FROM (
         AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND SAA.reasonType = 1
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = SA.subAdminId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -160,7 +168,7 @@ FROM (
         AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND TA.reasonType = 1
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = T.teacherId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -194,7 +202,7 @@ FROM (
         AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND SAA.reasonType = 2
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = SA.subAdminId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -215,7 +223,7 @@ FROM (
         AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND TA.reasonType = 2
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = T.teacherId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -249,7 +257,7 @@ FROM (
         AND SAA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND SAA.reasonType = 3
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = SA.subAdminId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
@@ -270,7 +278,7 @@ FROM (
         AND TA.attendanceDate BETWEEN '[?Start Date]' AND '[?End Date]'
         AND TA.reasonType = 3
     LEFT JOIN (
-        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_ID' AND isActive = 1 GROUP BY userId
+        SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues  WHERE fieldName = 'EMPLOYEE_ID' AND fieldValue NOT LIKE '%IGNORE%' AND isActive = 1 GROUP BY userId
         ) EID ON EID.userId = T.teacherId
     LEFT JOIN (
         SELECT MAX(profileFieldValueId), fieldValue, userId FROM ProfileFieldValues WHERE fieldName = 'EMPLOYEE_TYPE' AND isActive = 1 GROUP BY userId
