@@ -33,10 +33,11 @@ UNIVERSAL - Not school-specific; this code is present on the Shell site as well.
 * Start Page Widgets are organized by user view and name
 === USER VIEWS (USER TYPES) ===
 ADM	- Administrator
-ASM	- Admissions
-CDIR	- Campus Director
+ASM	- Admissions (staff type)
+CDIR	- Campus Director (staff type)
+CM	- Campus Manager (staff type)
 CON	- Contact
-FIN	- Financial Aid
+FIN	- Financial Aid (staff type)
 INS	- Instructor
 SDT	- Student
 STF	- general staff
