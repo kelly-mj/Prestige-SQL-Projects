@@ -3,7 +3,7 @@
 -- Lists all students who have graduated or dropped within the selected month
 
 SELECT t1.status
-    , t1.linkedName
+    , t1.linkedName 'Name'
     , t1.program
     , DATE_FORMAT(t1.endDate, '%m/%d/%Y') 'End Date'
 
