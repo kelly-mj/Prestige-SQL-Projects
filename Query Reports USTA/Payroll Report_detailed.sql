@@ -11,15 +11,17 @@ SELECT t1.TeacherID
   , t1.DOW AS 'Day Of The Week'
   , DATE_FORMAT(t1.ATDate, '%m/%d/%Y') AS 'Attendance Date'
   , CP.punchTimes 'Un-Rounded Punch Times'
-  , CONCAT(BT.fieldValue, ' min') 'Break Time'
+  , CONCAT(CAST(FLOOR((t1.rawDuration)) AS CHAR), ':', LPAD(CAST(FLOOR(60*((t1.rawDuration) - FLOOR((t1.rawDuration)))) AS CHAR), 2, '0')) 'Rounded Duration'
+  , CONCAT((SELECT fieldValue FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' AND userId = t1.TeacherID), ' min') 'Break Time'
   -- formatted daily duration as "hh:mm"
-  , CONCAT(CAST(FLOOR((t1.duration - BT.breakTime)) AS CHAR), ':', LPAD(CAST(FLOOR(60*((t1.duration-BT.breakTime) - FLOOR((t1.duration-BT.breakTime)))) AS CHAR), 2, '0')) AS 'Rounded Duration - Break Time'
+  , CONCAT(CAST(FLOOR((t1.duration)) AS CHAR), ':', LPAD(CAST(FLOOR(60*((t1.duration) - FLOOR((t1.duration)))) AS CHAR), 2, '0')) AS 'Rounded Duration - Break Time'
 
 FROM
       (SELECT T.teacherID AS TeacherID
         , CONCAT('<a href="admin_view_teacher.jsp?teacherid=', CAST(T.teacherId AS CHAR),'"target="_blank">', T.firstName, ' ', T.lastName, '</a>') AS Name
         , TA.attendanceDate AS ATdate
-        , (MAX(duration)) AS duration
+        , MAX(duration) AS rawDuration
+        , MAX(duration) - (SELECT fieldValue/60 FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' AND userId = T.teacherId) AS duration
         , T.campusCode AS Campus_Code
         , DAYNAME(TA.attendanceDate) AS DOW
         , MAX(TA.teacherAttendanceId)
@@ -39,7 +41,8 @@ UNION
        SELECT SA.SubadminID AS TeacherID
        , CONCAT('<a href="admin_view_subadmin.jsp?subadminid=', CAST(SA.subAdminId AS CHAR),'" target="_blank">', SA.firstName, ' ', SA.lastName, '</a>') AS Name
        , SAA.attendanceDate AS ATdate
-       , (MAX(duration) - .5) AS duration
+       , MAX(duration) AS rawDuration
+       , MAX(duration) - (SELECT fieldValue/60 FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' AND userId = SA.subAdminId) AS duration
        , SA.campusCode AS Campus_Code
        , DAYNAME(SAA.attendanceDate) AS DOW
        , MAX(SAA.subAdminAttendanceId)
@@ -58,10 +61,10 @@ UNION
              ) AS t1
 
 INNER JOIN (
-  SELECT C.userId, C.punchDate, GROUP_CONCAT(C.punchTime ORDER BY C.clockPunchId SEPARATOR ' ') AS punchTimes
+  SELECT C.userId, C.punchDate, GROUP_CONCAT(C.punchTime ORDER BY C.clockPunchId SEPARATOR '; ') AS punchTimes
   FROM (
     SELECT userId
-      , CONCAT(IF(clockedStatus%2 = 1, DATE_FORMAT(punchTime, '%l:%i %p -'), DATE_FORMAT(punchTime, '%l:%i %p; '))) AS punchTime
+      , DATE_FORMAT(punchTime, '%h:%i %p') AS punchTime
       , DATE(punchTime) as punchDate
       , clockPunchId
       FROM ClockPunches
@@ -70,14 +73,9 @@ INNER JOIN (
   ON CP.userId = t1.TeacherID
   AND CP.punchDate = t1.ATDate
 
-INNER JOIN (
-  SELECT userId, fieldValue/60 AS breakTime, fieldValue
-  FROM ProfileFieldValues WHERE fieldName = 'BREAK_TIME' ) BT    -- Break Time
-  ON BT.userId = t1.TeacherId
-
 
 UNION
-SELECT t3.TeacherID, NULL, NULL, NULL, t3.n3, t3.n4, -- NULL,
+SELECT t3.TeacherID, NULL, NULL, NULL, t3.n3, t3.n4, NULL,
 CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; font-weight: bold;">','',
 CONCAT('</td></tr><tr><td></td><td colspan="7" style="text-align: right; font color: white; font-size: 150%; background-color: #A8D0E6; font-weight: bold;">','<div align="right">'
 ,t3.Name,"'s" '  Weekly Hours Are','  '
