@@ -5,12 +5,38 @@
     -- Now only considers "S.isActive = 1" students as "Currently Enrolled"
     -- Added sections underneath main list to display LOA/Graduated/Withdrawn students who were enrolled for the chosen period
 
--- Displays counts of total enrolled students
+
+/* Displays count of student in each program */
 SELECT NULL AS 'Student ID'  -- student ID
-     , 'Student Count: '     AS 'Name' -- student name
-     , COUNT(S.idNumber) AS 'Program Name'             -- program name
-     , NULL AS 'Contract Start Date - End Date'             -- start to graduation dates
+     , CONCAT('Student Count in ', UPPER(P.programmeName)) AS 'Name' -- student name
+     , COUNT(S.idNumber) AS 'Program Name'                  -- program name
+     , NULL AS 'Contract Start Date - End Date'             -- contracted start to end dates
      , NULL AS 'Grad/LOA/Withdraw Date'
+
+FROM Students S
+   , Registration R
+   , Programmes P
+
+WHERE S.studentId = R.studentId
+  AND P.programmeId = R.programmeId
+  AND R.registrationId = (SELECT MAX(RR.registrationId) FROM Registrations RR WHERE RR.studentId = S.studentId AND RR.isActive = 1 GROUP BY RR.studentId)
+  AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
+              WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
+                          AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]')) AND L.<ADMINID>)
+  AND S.<ADMINID>
+  AND S.isActive = 1
+  AND R.startDate <= '[?End Date]'
+  AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
+GROUP BY P.programmeId
+
+
+-- Displays counts of total enrolled students
+UNION
+SELECT '<strong>Active Students</strong>'
+     , CONCAT('<strong>Active Enrolled Student Count: ', COUNT(S.idNumber), '</strong>')
+     , NULL
+     , NULL
+     , NULL
 
 FROM Students S
    , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
@@ -30,49 +56,20 @@ WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  
   AND RA.endDate > '[?Start Date]'                         -- end date
 
 
-/* Displays count of student in each program */
-UNION
-SELECT NULL
-     , CONCAT('Student Count in ', UPPER(P.programmeName))
-     , COUNT(S.idNumber)
-     , NULL
-     , NULL
-
-FROM Students S
-   , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
-      GROUP BY REG.studentId) R
-   , Programmes P
-   , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
-      GROUP BY R.studentId) RA
-
-WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  -- student ID criteria
-  AND P.programmeId = R.programmeId                                            -- programme matching
-  AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
-              WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
-                          AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]')) AND L.<ADMINID>)
-  AND S.<ADMINID>
-  AND S.isActive = 1
-  AND R.startDate <= '[?End Date]'                         -- start date
-  AND RA.endDate > '[?Start Date]'                         -- end date
-GROUP BY P.programmeId
-
-
 /* Displays list of students: Name, Program Name and Contract Start and End Dates */
 UNION
 (SELECT DISTINCT S.studentId 'Student ID'           -- student ID
-     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.firstName AS CHAR), ' ', CAST(S.lastName AS CHAR), '</a>') AS Name -- student name
+     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.lastName AS CHAR), ', ', CAST(S.firstName AS CHAR), '</a>') AS Name -- student name
      , P.programmeName 'Program Name'              -- program name
-     , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  ', DATE_FORMAT(RA.endDate, "%m/%d/%Y")) 'Contract Start Date - End Date'
-     , NULL
+     , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  ', DATE_FORMAT(R.endDate, "%m/%d/%Y")) 'Contract Start Date - End Date'
+     , NULL, S.isActive, R.regStatus
 
 FROM Students S
-   , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
-      GROUP BY REG.studentId) R
+   , Registrations R
    , Programmes P
-   , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
-      GROUP BY R.studentId) RA
 
-WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  -- student ID criteria
+WHERE S.studentId = R.studentId
+  AND R.registrationId = (SELECT MAX(RR.registrationId) FROM Registrations RR WHERE RR.studentId = S.studentId AND RR.isActive = 1 GROUP BY RR.studentId)
   AND P.programmeId = R.programmeId                                            -- programme matching
   AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
 						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
@@ -80,9 +77,9 @@ WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  
   AND S.<ADMINID>
   AND S.isActive = 1
   AND R.startDate <= '[?End Date]'
-  AND RA.endDate > '[?Start Date]'
+  AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
 
-ORDER BY R.startDate ASC)    -- end active students
+ORDER BY S.lastName, R.startDate ASC)    -- end active students
 
 
 /* Count of LOA students */
@@ -100,7 +97,7 @@ FROM Students S
    , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
       GROUP BY R.studentId) RA
    , LeavesOfAbsence LOA
-      
+
 WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                 -- student ID criteria
   AND LOA.studentId = S.studentId                                              -- LOA join
   AND P.programmeId = R.programmeId                                            -- programme matching
@@ -116,10 +113,10 @@ WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                 -
 /* LOA Student List */
 UNION
 (SELECT DISTINCT S.studentId 'Student ID'           -- student ID
-     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.firstName AS CHAR), ' ', CAST(S.lastName AS CHAR), '</a>') AS Name -- student name
+     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.lastName AS CHAR), ', ', CAST(S.firstName AS CHAR), '</a>') AS Name -- student name
      , P.programmeName 'Program Name'              -- program name
      , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  ', DATE_FORMAT(RA.endDate, "%m/%d/%Y")) 'Contract Start Date - End Date'
-     , DATE_FORMAT(LOA.leaveDate, "%m/%d/%Y")
+     , CONCAT(DATE_FORMAT(LOA.leaveDate, "%m/%d/%Y"), ' - ', COALESCE(DATE_FORMAT(LOA.returnDate, "%m/%d/%Y"), 'Current'))
 
 FROM Students S
    , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
@@ -140,24 +137,26 @@ WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                 -
   AND R.startDate <= '[?End Date]'
   AND RA.endDate > '[?Start Date]'
 
-ORDER BY R.startDate ASC)   -- end LOA
+ORDER BY S.lastName, R.startDate ASC)   -- end LOA
 
-/* Count of LOA students */
+/* Count of graduated/withdrawn students */
 UNION
 (SELECT '<div><strong>Graduated/Withdrawn Students</strong></div>'
     , CONCAT('<div><strong>Number of graduated/withdrawn students from this period: ', COUNT(S.studentId), '</strong></div>')
-    , null
-    , null
+    , NULL
+    , NULL
     , '<div><strong>Date of Graduation or Withdrawal</strong></div>'
 
 FROM Students S
-   , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
-      GROUP BY REG.studentId) R
+   , (SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations
+      GROUP BY studentId) RR
+   , Registrations R
    , Programmes P
-   , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
-      GROUP BY R.studentId) RA
+   , (SELECT MAX(endDate) AS endDate, studentId FROM Registrations_Audit
+      GROUP BY studentId) RA
 
-WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                 -- student ID criteria
+WHERE S.studentId = RR.studentId AND S.studentId = RA.studentId                 -- student ID criteria
+  AND R.studentId = S.studentId AND R.registrationId = RR.maxReg                -- registrations join
   AND P.programmeId = R.programmeId                                            -- programme matching
   AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
               WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
@@ -165,18 +164,16 @@ WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                 -
   AND S.<ADMINID>
   AND S.isActive IN (0, 3)
   AND R.startDate <= '[?End Date]'
-  AND RA.endDate > '[?Start Date]')
+  AND R.graduationDate > '[?Start Date]')
 
 
 /* Grad/Withdrawn student list */
 UNION
 (SELECT DISTINCT S.studentId 'Student ID'           -- student ID
-     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.firstName AS CHAR), ' ', CAST(S.lastName AS CHAR), '</a>') AS Name -- student name
+     , CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.lastName AS CHAR), ', ', CAST(S.firstName AS CHAR), '</a>') AS Name -- student name
      , P.programmeName 'Program Name'              -- program name
      , CONCAT(DATE_FORMAT(R.startDate, "%m/%d/%Y"), '  -  ', DATE_FORMAT(RA.endDate, "%m/%d/%Y")) 'Contract Start Date - End Date'
-     , CASE WHEN S.isActive = 3 THEN CONCAT(DATE_FORMAT(DATE(S.lastUpdateDtTm), "%m/%d/%Y"), '  -  Grad')
-          ELSE DATE_FORMAT(DATE(S.lastUpdateDtTm), "%m/%d/%Y")
-          END
+     , IF(S.isActive = 3, DATE_FORMAT(DATE(S.lastUpdateDtTm), "%m/%d/%Y (Graduated)"), DATE_FORMAT(DATE(S.lastUpdateDtTm), "%m/%d/%Y (Withdrew)"))
 
 FROM Students S
    , (SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations
@@ -197,4 +194,4 @@ WHERE S.studentId = RR.studentId AND S.studentId = RA.studentId                 
   AND R.startDate <= '[?End Date]'
   AND R.graduationDate > '[?Start Date]'
 
-ORDER BY R.startDate ASC)   -- end Grad/Withdraw
+ORDER BY S.lastName, R.startDate ASC)   -- end Grad/Withdraw
