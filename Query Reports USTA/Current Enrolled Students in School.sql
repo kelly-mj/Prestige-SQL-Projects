@@ -1,12 +1,14 @@
 -- 1. Current Enrolled Students in School
 -- Author: Kelly MJ    |    Creation date: 7/20/18
 -- Allows user to select date range, then displays students who were enrolled during that date range.
--- 8//22/2018 Update:
-    -- Now only considers "S.isActive = 1" students as "Currently Enrolled"
-    -- Added sections underneath main list to display LOA/Graduated/Withdrawn students who were enrolled for the chosen period
+-- Kelly MJ 3/18/19 : Major changes to widget
+   -- "Enrolled Students" are any students with an active registration which was active during any part of the selected date range
+   -- "Active Students" are any enrolled students who were not graduated or who reached the end of the selected period with an LOA status (ie. had no graduation date by the end date and were not on LOA during the end date)
+   -- "LOA Students" are any enrolled students who reached the end of the selected period with an LOA status (ie. are not graduated or have not finished their LOA by the selected end date)
+   -- "Graduated Students" are any enrolled students who graduated during the selected date range
 
 
-/* Displays count of student in each program */
+/* Displays count of enrolled students in each program */
 SELECT NULL AS 'Student ID'  -- student ID
      , CONCAT('Student Count in ', UPPER(P.programmeName)) AS 'Name' -- student name
      , COUNT(S.idNumber) AS 'Program Name'                  -- program name
@@ -45,15 +47,19 @@ FROM Students S
    , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
       GROUP BY R.studentId) RA
 
-WHERE S.studentId = R.studentId AND S.studentId = RA.studentId                  -- student ID criteria
+FROM Students S
+ , Registrations R
+ , Programmes P
+
+WHERE S.studentId = R.studentId
+  AND R.registrationId = (SELECT MAX(RR.registrationId) FROM Registrations RR WHERE RR.studentId = S.studentId AND RR.isActive = 1 GROUP BY RR.studentId)
   AND P.programmeId = R.programmeId                                            -- programme matching
   AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
-						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
-                          AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]')) AND L.<ADMINID>)
+    						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
+                            AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]'))  AND L.<ADMINID>)
   AND S.<ADMINID>
-  AND S.isActive = 1
-  AND R.startDate <= '[?End Date]'                         -- start date
-  AND RA.endDate > '[?Start Date]'                         -- end date
+  AND R.startDate <= '[?End Date]'           -- Was student enrolled during given date range?
+  AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
 
 
 /* Displays list of students: Name, Program Name and Contract Start and End Dates */
@@ -75,7 +81,6 @@ WHERE S.studentId = R.studentId
 						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
                           AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]'))  AND L.<ADMINID>)
   AND S.<ADMINID>
-  AND S.isActive = 1
   AND R.startDate <= '[?End Date]'
   AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
 
