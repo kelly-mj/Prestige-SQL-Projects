@@ -9,57 +9,59 @@
 
 
 /* Displays count of enrolled students in each program */
-SELECT NULL AS 'Student ID'  -- student ID
-     , CONCAT('Student Count in ', UPPER(P.programmeName)) AS 'Name' -- student name
-     , COUNT(S.idNumber) AS 'Program Name'                  -- program name
-     , NULL AS 'Contract Start Date - End Date'             -- contracted start to end dates
-     , NULL AS 'Grad/LOA/Withdraw Date'
+SELECT NULL AS 'Student ID'                                 -- column for student ID
+     , CONCAT('Enrolled Student Count in ', UPPER(P.programmeName)) AS 'Name' -- column for student name
+     , COUNT(S.idNumber) AS 'Program Name'                  -- column for program name
+     , NULL AS 'Contract Start Date - End Date'             -- column to display contracted start to end dates
+     , NULL AS 'Grad/LOA/Withdraw Date'                     -- column to list additional, relevant dates
 
 FROM Students S
-   , Registration R
-   , Programmes P
-
-WHERE S.studentId = R.studentId
-  AND P.programmeId = R.programmeId
+INNER JOIN Registrations R ON R.studentId = S.studentId
   AND R.registrationId = (SELECT MAX(RR.registrationId) FROM Registrations RR WHERE RR.studentId = S.studentId AND RR.isActive = 1 GROUP BY RR.studentId)
-  AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
-              WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
-                          AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]')) AND L.<ADMINID>)
-  AND S.<ADMINID>
-  AND S.isActive = 1
+INNER JOIN (SELECT programmeId, programmeName FROM Programmes) P ON P.programmeId = R.programmeId
+
+WHERE S.<ADMINID>
   AND R.startDate <= '[?End Date]'
   AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
+  AND S.isActive NOT IN (SELECT statusId FROM StatusSequences WHERE statusName IN ('No Start', 'Application in Progress'))
+
 GROUP BY P.programmeId
 
 
--- Displays counts of total enrolled students
+/* Displays counts of total enrolled students */
+UNION
+SELECT '<strong>Enrolled Students</strong>'
+     , CONCAT('<strong>Enrolled Student Count: ', COUNT(S.idNumber), '</strong>')
+     , NULL
+     , NULL
+     , NULL
+
+FROM Students S
+INNER JOIN Registrations R ON R.studentId = S.studentId
+    AND R.registrationId = (SELECT MAX(RR.registrationId) FROM Registrations RR WHERE RR.studentId = S.studentId AND RR.isActive = 1 GROUP BY RR.studentId)
+
+WHERE S.<ADMINID>
+  AND R.startDate <= '[?End Date]'
+  AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
+  AND S.isActive NOT IN (SELECT statusId FROM StatusSequences WHERE statusName IN ('No Start', 'Application in Progress'))
+
+
+  /* Displays counts of active enrolled students */
 UNION
 SELECT '<strong>Active Students</strong>'
-     , CONCAT('<strong>Active Enrolled Student Count: ', COUNT(S.idNumber), '</strong>')
-     , NULL
-     , NULL
-     , NULL
+   , CONCAT('<strong>Active Student Count: ', COUNT(S.idNumber), '</strong>')
+   , NULL
+   , NULL
+   , NULL
 
 FROM Students S
-   , (SELECT REG.studentId, MAX(REG.startDate) AS startDate, REG.programmeId FROM Registrations REG
-      GROUP BY REG.studentId) R
-   , Programmes P
-   , (SELECT MAX(R.endDate) AS endDate, R.studentId FROM Registrations_Audit R
-      GROUP BY R.studentId) RA
-
-FROM Students S
- , Registrations R
- , Programmes P
-
-WHERE S.studentId = R.studentId
+INNER JOIN Registrations R ON R.studentId = S.studentId
   AND R.registrationId = (SELECT MAX(RR.registrationId) FROM Registrations RR WHERE RR.studentId = S.studentId AND RR.isActive = 1 GROUP BY RR.studentId)
-  AND P.programmeId = R.programmeId                                            -- programme matching
-  AND S.studentId NOT IN (SELECT DISTINCT L.studentId FROM LeavesOfAbsence L   -- exclude LOA students
-    						  WHERE L.isActive = 1 AND (leaveDate < '[?Start Date]'
-                            AND (L.returnDate IS NULL OR L.returnDate > '[?End Date]'))  AND L.<ADMINID>)
-  AND S.<ADMINID>
-  AND R.startDate <= '[?End Date]'           -- Was student enrolled during given date range?
-  AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
+
+WHERE S.<ADMINID>
+AND R.startDate <= '[?End Date]'
+AND (R.graduationDate > '[?Start Date]' OR R.graduationDate IS NULL)
+AND S.isActive NOT IN (SELECT statusId FROM StatusSequences WHERE statusName IN ('No Start', 'Application in Progress'))
 
 
 /* Displays list of students: Name, Program Name and Contract Start and End Dates */
