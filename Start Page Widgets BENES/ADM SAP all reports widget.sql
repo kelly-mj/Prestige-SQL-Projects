@@ -1,3 +1,7 @@
+-- BENES ADM All SAP Reports
+-- Kelly MJ  |  3/27/19
+  -- Displays whether there is a SAP report for SAP Periods 1, 2, 3, 4.
+
 SELECT t1.Name
 	, t1.Program
     , t1.programHours
