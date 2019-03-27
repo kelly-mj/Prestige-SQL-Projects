@@ -2,7 +2,7 @@
 -- Kelly MJ  |  2/22/2019
 
 SELECT DATE_FORMAT(CP.punchDate, '%m/%d/%Y') 'Attendance Date'
-	, CONCAT('<a target="_blank" href="view_attendance.jsp?semesterid=', CAST(R.enrollmentSemesterId AS CHAR), '&classid=', CAST(CSR.classId AS CHAR), '&subjectid=', CAST(A.subjectId AS CHAR), '&studentid=', CAST(S.studentId AS CHAR), '">', S.firstName, ' ', S.lastName, '</a>') AS 'Student Name'
+	, CONCAT('<a target="_blank" href="view_attendance.jsp?semesterid=', CAST(R.enrollmentSemesterId AS CHAR), '&classid=', CAST(CSR.classId AS CHAR), '&subjectid=', CAST(A.subjectId AS CHAR), '&studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ' ', S.firstName, '</a>') AS 'Student Name'
 	, C.className 'Class'
 	, CP.punchTimes
 
