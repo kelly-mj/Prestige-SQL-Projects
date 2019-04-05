@@ -79,27 +79,27 @@ FROM (
         ON SCH.userId = S.studentId
 
     LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount1 FROM FolderFileReltn
-			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1)
-			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
-			GROUP BY userId) DISB1
+				WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1)
+				AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
+				GROUP BY userId) DISB1
         ON DISB1.userId = S.studentId
 
     LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount2 FROM FolderFileReltn
-			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
-			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
-			GROUP BY userId) DISB2
+				WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
+				AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
+				GROUP BY userId) DISB2
         ON DISB2.userId = S.studentId
 
     LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount3 FROM FolderFileReltn
-			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1)
-			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
-			GROUP BY userId) DISB3
+				WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1)
+				AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
+				GROUP BY userId) DISB3
         ON DISB3.userId = S.studentId
 
     LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount4 FROM FolderFileReltn
-			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1)
-			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 4' AND isActive = 1)
-			GROUP BY userId) DISB4
+				WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1)
+				AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 4' AND isActive = 1)
+				GROUP BY userId) DISB4
         ON DISB4.userId = S.studentId
 
     LEFT JOIN (SELECT studentId, payPeriodDate AS dueDate1, registrationId FROM PayPeriodDates WHERE isActive = 1 AND payPeriodNo = 1) PP1
