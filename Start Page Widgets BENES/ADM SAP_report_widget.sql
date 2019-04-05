@@ -7,12 +7,19 @@ SELECT t2.Name
 	, t2.Program
 	, t2.hoursScheduled AS 'Hours Scheduled'
 	, t2.SAPPeriod AS 'SAP Period'
+/*	, COALESCE(IF(t2.dueDate >= CURDATE()
+				, DATE_FORMAT(t2.dueDate, '%m/%d/%y')
+				, DATE_FORMAT(t2.dueDate, '<span style="color: red;">%m/%d/%y</span>'))
+		, 'No due date')  'Due Date'  */
+	, COALESCE(IF(t2.SAPReports > 0
+					, DATE_FORMAT(t2.dueDate, '<div style="background-color: #bdefaa; color: black;">%m/%d/%y</div>')
+					, IF(t2.dueDate >= CURDATE()
+							, DATE_FORMAT(t2.dueDate, '%m/%d/%y')
+							, DATE_FORMAT(t2.dueDate, '<div style="background-color: #ffb7af; color: black;">%m/%d/%y</div>')))
+			, 'No due date') 'Due Date'
 	, IF(t2.SAPReports > 0
-		, CONCAT(t2.SAPurlStart, CAST(t2.studentId AS CHAR), t2.SAPurlEnd, 'Yes</a>')
-        , CONCAT(t2.SAPurlStart, CAST(t2.studentId AS CHAR), t2.SAPurlEnd, 'No</a>')) 'SAP Documents'
-	, IF(t2.dueDate >= CURDATE()
-		, DATE_FORMAT(t2.dueDate, '%m/%d/%y')
-        , DATE_FORMAT(t2.dueDate, '<span style="color: red;">%m/%d/%y</span>')) 'Due Date'
+		, CONCAT(t2.SAPurl, 'Yes</a>')
+        , CONCAT(t2.SAPurl, 'No', IF(t2.dueDate < CURDATE(), '; Past due', ''),'</a>')) 'SAP Documents'
 
 FROM (
 	SELECT t1.*
@@ -24,10 +31,22 @@ FROM (
 			WHEN 4 THEN t1.fileCount4 END AS SAPReports
 		, '<a target="_blank" href="files_and_documents.jsp?userid=' AS SAPurlStart
 		, CASE t1.SAPPeriod
-			WHEN 1 THEN '&usertype=1&folderFolderReltnId=116&previousFolderId=0,116">'
-			WHEN 2 THEN '&usertype=1&folderFolderReltnId=117&previousFolderId=0,117">'
-			WHEN 3 THEN '&usertype=1&folderFolderReltnId=118&previousFolderId=0,118">'
-			WHEN 4 THEN '&usertype=1&folderFolderReltnId=119&previousFolderId=0,119">' END AS SAPurlEnd
+			WHEN 1 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
+								, '&usertype=1&folderFolderReltnId='
+								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1) AS CHAR)
+								, '&previousFolderId=0,0">')
+			WHEN 2 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
+								, '&usertype=1&folderFolderReltnId='
+								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1) AS CHAR)
+								, '&previousFolderId=0,0">')
+			WHEN 3 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
+								, '&usertype=1&folderFolderReltnId='
+								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1) AS CHAR)
+								, '&previousFolderId=0,0">')
+			WHEN 4 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
+								, '&usertype=1&folderFolderReltnId='
+								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1) AS CHAR)
+								, '&previousFolderId=0,0">') END AS SAPurl
 
 	FROM (
 		SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
@@ -78,23 +97,35 @@ FROM (
 				INNER JOIN (SELECT PFV.userId, PFV.fieldValue AS hoursScheduled FROM ProfileFieldValues PFV WHERE PFV.fieldName = 'PROGRAM_HOURS_SCHEDULED') SCH
 					ON SCH.userId = S.studentId
 
-				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount1 FROM FolderFileReltn WHERE folderFolderReltnId = 116 AND documentTypeId IN (52, 53) GROUP BY userId) DISB1
-	            	ON DISB1.userId = S.studentId
+				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount1 FROM FolderFileReltn
+							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
+							GROUP BY userId) DISB1
+			        ON DISB1.userId = S.studentId
 
-	            LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount2 FROM FolderFileReltn WHERE folderFolderReltnId = 117 AND documentTypeId IN (52, 53) GROUP BY userId) DISB2
-	            	ON DISB2.userId = S.studentId
+				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount2 FROM FolderFileReltn
+							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
+							GROUP BY userId) DISB2
+			        ON DISB2.userId = S.studentId
 
-	            LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount3 FROM FolderFileReltn WHERE folderFolderReltnId = 118 AND documentTypeId IN (52, 53) GROUP BY userId) DISB3
-	            	ON DISB3.userId = S.studentId
+				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount3 FROM FolderFileReltn
+							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
+							GROUP BY userId) DISB3
+			        ON DISB3.userId = S.studentId
 
-	            LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount4 FROM FolderFileReltn WHERE folderFolderReltnId = 119 AND documentTypeId IN (52, 53) GROUP BY userId) DISB4
-	            	ON DISB4.userId = S.studentId
+			    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount4 FROM FolderFileReltn
+							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 4' AND isActive = 1)
+							GROUP BY userId) DISB4
+			        ON DISB4.userId = S.studentId
 
 				WHERE S.isActive = 1
 				   AND S.<ADMINID>
 			) t1
 
-	WHERE t1.SAPPeriod < 5
+		WHERE t1.SAPPeriod < 5
 	) t2
 WHERE ((t2.SAPReports < 1 OR t2.SAPReports IS NULL) OR (t2.SAPReports > 0 AND t2.dueDate >= CURDATE()))
 
