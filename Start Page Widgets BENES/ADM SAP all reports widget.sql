@@ -6,9 +6,9 @@
 
 SELECT t1.Name
     , t1.Program
-    , t1.programHours
-    , t1.hoursScheduled 'Hours Scheduled'
-    , t1.actualHours 'Actual Hours'
+    , FORMAT(t1.programHours, 1) 'Program Hours'
+    , FORMAT(t1.hoursScheduled, 1) 'Hours Scheduled'
+    , FORMAT(t1.actualHours, 1) 'Actual Hours'
     , IF(t1.fileCount1 IS NOT NULL
     , CONCAT('<div style="background-color: #bdefaa;">', SAP1url, COALESCE(DATE_FORMAT(t1.dueDate1, '%m/%d/%y'), 'No due date'), '</a></div>')
         , IF(t1.dueDate1 < CURDATE()
@@ -78,16 +78,28 @@ FROM (
     INNER JOIN (SELECT PFV.userId, PFV.fieldValue AS hoursScheduled FROM ProfileFieldValues PFV WHERE PFV.fieldName = 'PROGRAM_HOURS_SCHEDULED') SCH
         ON SCH.userId = S.studentId
 
-    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount1 FROM FolderFileReltn WHERE folderFolderReltnId = 116 AND documentTypeId IN (52) GROUP BY userId) DISB1
+    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount1 FROM FolderFileReltn
+			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1)
+			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
+			GROUP BY userId) DISB1
         ON DISB1.userId = S.studentId
 
-    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount2 FROM FolderFileReltn WHERE folderFolderReltnId = 117 AND documentTypeId IN (53) GROUP BY userId) DISB2
+    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount2 FROM FolderFileReltn
+			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
+			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
+			GROUP BY userId) DISB2
         ON DISB2.userId = S.studentId
 
-    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount3 FROM FolderFileReltn WHERE folderFolderReltnId = 118 AND documentTypeId IN (119) GROUP BY userId) DISB3
+    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount3 FROM FolderFileReltn
+			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1)
+			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
+			GROUP BY userId) DISB3
         ON DISB3.userId = S.studentId
 
-    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount4 FROM FolderFileReltn WHERE folderFolderReltnId = 119 AND documentTypeId IN (120) GROUP BY userId) DISB4
+    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount4 FROM FolderFileReltn
+			WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1)
+			AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 4' AND isActive = 1)
+			GROUP BY userId) DISB4
         ON DISB4.userId = S.studentId
 
     LEFT JOIN (SELECT studentId, payPeriodDate AS dueDate1, registrationId FROM PayPeriodDates WHERE isActive = 1 AND payPeriodNo = 1) PP1
