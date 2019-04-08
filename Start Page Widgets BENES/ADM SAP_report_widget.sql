@@ -42,9 +42,9 @@ FROM (
 					, DISB2.disb2files
 					, DISB3.disb3files
 					, DISB4.disb4files
-					, CASE WHEN PP1.period1 - HOURS.hours BETWEEN -50 AND 20 THEN 1		-- find pay period of student
-						   WHEN PP2.period2 - HOURS.hours BETWEEN -50 AND 20 THEN 2
-                           WHEN PP3.period3 - HOURS.hours BETWEEN -50 AND 20 THEN 3
+					, CASE WHEN PP1.period1 - HOURS.hours BETWEEN -50 AND 50 THEN 1		-- find pay period of student
+						   WHEN PP2.period2 - HOURS.hours BETWEEN -50 AND 50 THEN 2
+                           WHEN PP3.period3 - HOURS.hours BETWEEN -50 AND 50 THEN 3
                            ELSE 5 END AS SAPPeriod
 					, CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(S.studentId AS CHAR), '&usertype=1&folderFolderReltnId=') AS SAPurlStart
 					, '&previousFolderId=0,0">' AS SAPurlEnd
