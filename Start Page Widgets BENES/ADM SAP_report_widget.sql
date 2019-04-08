@@ -7,10 +7,6 @@ SELECT t2.Name
 	, t2.Program
 	, t2.hoursScheduled AS 'Hours Scheduled'
 	, t2.SAPPeriod AS 'SAP Period'
-/*	, COALESCE(IF(t2.dueDate >= CURDATE()
-				, DATE_FORMAT(t2.dueDate, '%m/%d/%y')
-				, DATE_FORMAT(t2.dueDate, '<span style="color: red;">%m/%d/%y</span>'))
-		, 'No due date')  'Due Date'  */
 	, COALESCE(IF(t2.SAPReports > 0
 					, DATE_FORMAT(t2.dueDate, '<div style="background-color: #bdefaa; color: black;">%m/%d/%y</div>')
 					, IF(t2.dueDate >= CURDATE()
@@ -19,7 +15,7 @@ SELECT t2.Name
 			, 'No due date') 'Due Date'
 	, IF(t2.SAPReports > 0
 		, CONCAT(t2.SAPurl, 'Yes</a>')
-        , CONCAT(t2.SAPurl, 'No', IF(t2.dueDate < CURDATE(), '; Past due', ''),'</a>')) 'SAP Documents'
+        , CONCAT(t2.SAPurl, 'No', IF(t2.dueDate < CURDATE(), '; Past due', ''),'</a>')) 'SAP Report Status'
 
 FROM (
 	SELECT t1.*
