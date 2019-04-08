@@ -5,8 +5,9 @@
 
 SELECT t2.Name
 	, t2.Program
-	, t2.hoursScheduled AS 'Hours Scheduled'
-	, t2.SAPPeriod AS 'SAP Period'
+	, FORMAT(t2.programHours, 0) 'Program Hours'
+	, FORMAT(t2.hours, 0) AS 'Hours Scheduled'
+	, FORMAT(t2.SAPPeriod, 0) AS 'SAP Report'
 	, COALESCE(IF(t2.SAPReports > 0
 					, DATE_FORMAT(t2.dueDate, '<div style="background-color: #bdefaa; color: black;">%m/%d/%y</div>')
 					, IF(t2.dueDate >= CURDATE()
@@ -21,61 +22,33 @@ FROM (
 	SELECT t1.*
 		, (SELECT MAX(PPD.payPeriodDate) FROM PayPeriodDates PPD WHERE PPD.studentId = t1.studentId AND PPD.payPeriodNo = t1.SAPPeriod GROUP BY PPD.studentId) AS dueDate
         , CASE t1.SAPPeriod
-			WHEN 1 THEN t1.fileCount1
-			WHEN 2 THEN t1.fileCount2
-			WHEN 3 THEN t1.fileCount3
-			WHEN 4 THEN t1.fileCount4 END AS SAPReports
-		, '<a target="_blank" href="files_and_documents.jsp?userid=' AS SAPurlStart
+			WHEN 1 THEN t1.disb2files
+			WHEN 2 THEN t1.disb3files
+			WHEN 3 THEN t1.disb4files END AS SAPReports
 		, CASE t1.SAPPeriod
-			WHEN 1 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
-								, '&usertype=1&folderFolderReltnId='
-								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1) AS CHAR)
-								, '&previousFolderId=0,0">')
-			WHEN 2 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
-								, '&usertype=1&folderFolderReltnId='
-								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1) AS CHAR)
-								, '&previousFolderId=0,0">')
-			WHEN 3 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
-								, '&usertype=1&folderFolderReltnId='
-								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1) AS CHAR)
-								, '&previousFolderId=0,0">')
-			WHEN 4 THEN CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(t1.studentId AS CHAR)
-								, '&usertype=1&folderFolderReltnId='
-								, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1) AS CHAR)
-								, '&previousFolderId=0,0">') END AS SAPurl
+			WHEN 1 THEN CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1) AS CHAR), SAPurlEnd)
+			WHEN 2 THEN CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1) AS CHAR), SAPurlEnd)
+			WHEN 3 THEN CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1) AS CHAR), SAPurlEnd) END AS SAPurl
 
 	FROM (
 		SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
 					, S.studentId
 					, P.programmeName AS Program
 					, P.minClockHours AS programHours
-					, SCH.hoursScheduled
+					, HOURS.hours
 					, PP.programmeId	-- Matching program in PayPeriod table
 					, PP.ppHours		-- Hours in matching program (1200, 600, 360)
 					, PP.disbPercent	-- How the payments are split up (100%, 50%, 25% per pay period)
-					, CASE WHEN (SELECT MAX(PP.payPeriodHours) FROM PayPeriod PP WHERE PP.programmeId = P.programmeId) = 1200
-							 THEN CASE WHEN 450  - hoursScheduled BETWEEN -50 AND 20 THEN 1
-									   WHEN 900  - hoursScheduled BETWEEN -50 AND 20 THEN 2
-									   WHEN 1050 - hoursScheduled BETWEEN -50 AND 20 THEN 3
-									   WHEN 1200 - hoursScheduled BETWEEN -50 AND 20 THEN 4
-									   ELSE 5 END
-						WHEN (SELECT MAX(PP.payPeriodHours) FROM PayPeriod PP WHERE PP.programmeId = P.programmeId) = 600 AND PP.disbPercent = 50.0
-							 THEN CASE WHEN 301  - hoursScheduled BETWEEN -50 AND 20 THEN 1
-									   WHEN 600  - hoursScheduled BETWEEN -50 AND 20 THEN 2
-									   ELSE 5 END
-						WHEN (SELECT MAX(PP.payPeriodHours) FROM PayPeriod PP WHERE PP.programmeId = P.programmeId) = 600 AND PP.disbPercent = 100.0
-							 THEN CASE WHEN 600  - hoursScheduled BETWEEN -50 AND 20 THEN 1
-									   ELSE 5 END
-						WHEN (SELECT MAX(PP.payPeriodHours) FROM PayPeriod PP WHERE PP.programmeId = P.programmeId) = 360 AND PP.disbPercent = 50.0
-							 THEN CASE WHEN 180  - hoursScheduled BETWEEN -50 AND 20 THEN 1
-									   WHEN 360  - hoursScheduled BETWEEN -50 AND 20 THEN 2
-									   ELSE 5 END
-						ELSE 'Something has gone horribly wrong'
-				   END AS SAPPeriod
-	               , DISB1.fileCount1
-	               , DISB2.fileCount2
-	               , DISB3.fileCount3
-	               , DISB4.fileCount4
+					, DISB2.disb2files
+					, DISB3.disb3files
+					, DISB4.disb4files
+					, CASE WHEN PP1.period1 - HOURS.hours BETWEEN -50 AND 20 THEN 1		-- find pay period of student
+						   WHEN PP2.period2 - HOURS.hours BETWEEN -50 AND 20 THEN 2
+                           WHEN PP3.period3 - HOURS.hours BETWEEN -50 AND 20 THEN 3
+                           ELSE 5 END AS SAPPeriod
+					, CONCAT('<a target="_blank" href="files_and_documents.jsp?userid=', CAST(S.studentId AS CHAR), '&usertype=1&folderFolderReltnId=') AS SAPurlStart
+					, '&previousFolderId=0,0">' AS SAPurlEnd
+
 
 				FROM Students S
 
@@ -90,39 +63,42 @@ FROM (
 				INNER JOIN (SELECT programmeId, MAX(payPeriodHours) ppHours, MAX(payPeriodDisbPercent) disbPercent FROM PayPeriod GROUP BY programmeId) PP
 					ON PP.programmeId = R.programmeId
 
-				INNER JOIN (SELECT PFV.userId, PFV.fieldValue AS hoursScheduled FROM ProfileFieldValues PFV WHERE PFV.fieldName = 'PROGRAM_HOURS_SCHEDULED') SCH
-					ON SCH.userId = S.studentId
+				INNER JOIN (SELECT PFV.userId, PFV.fieldValue AS hours FROM ProfileFieldValues PFV WHERE PFV.fieldName = 'PROGRAM_HOURS_SCHEDULED') HOURS
+					ON HOURS.userId = S.studentId
 
-				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount1 FROM FolderFileReltn
-							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 1' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
-							GROUP BY userId) DISB1
-			        ON DISB1.userId = S.studentId
-
-				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount2 FROM FolderFileReltn
+				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb2files FROM FolderFileReltn
 							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
 							GROUP BY userId) DISB2
 			        ON DISB2.userId = S.studentId
 
-				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount3 FROM FolderFileReltn
+				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb3files FROM FolderFileReltn
 							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
 							GROUP BY userId) DISB3
 			        ON DISB3.userId = S.studentId
 
-			    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS fileCount4 FROM FolderFileReltn
+			    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb4files FROM FolderFileReltn
 							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 4' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
 							GROUP BY userId) DISB4
 			        ON DISB4.userId = S.studentId
+
+				LEFT JOIN (SELECT registrationId, MAX(payPeriodHours) AS period1 FROM PayPeriodDates WHERE payPeriodNo = 1 GROUP BY registrationId) PP1
+					ON PP1.registrationId = R.registrationId
+
+				LEFT JOIN (SELECT registrationId, MAX(payPeriodHours) AS period2 FROM PayPeriodDates WHERE payPeriodNo = 2 GROUP BY registrationId) PP2
+					ON PP2.registrationId = R.registrationId
+
+                LEFT JOIN (SELECT registrationId, MAX(payPeriodHours) AS period3 FROM PayPeriodDates WHERE payPeriodNo = 3 GROUP BY registrationId) PP3
+					ON PP3.registrationId = R.registrationId
 
 				WHERE S.isActive = 1
 				   AND S.<ADMINID>
 			) t1
 
 		WHERE t1.SAPPeriod < 5
+
 	) t2
-WHERE ((t2.SAPReports < 1 OR t2.SAPReports IS NULL) OR (t2.SAPReports > 0 AND t2.dueDate >= CURDATE()))
 
 ORDER BY t2.dueDate ASC
