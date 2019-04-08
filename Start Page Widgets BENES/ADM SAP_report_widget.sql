@@ -101,4 +101,6 @@ FROM (
 
 	) t2
 
+WHERE ((t2.SAPReports < 0 OR t2.SAPReports IS NULL) OR (t2.dueDate > DATE_ADD(CURDATE(), INTERVAL 2 DAY) AND t2.SAPReports > 0))
+
 ORDER BY t2.dueDate ASC
