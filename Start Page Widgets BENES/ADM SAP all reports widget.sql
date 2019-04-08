@@ -106,7 +106,7 @@ FROM (
     LEFT JOIN (SELECT studentId, payPeriodDate AS dueDate3, registrationId FROM PayPeriodDates WHERE isActive = 1 AND payPeriodNo = 3) PP3
         ON PP3.studentId = S.studentId AND PP3.registrationId = R.registrationId
 
-    WHERE S.isActive = 1
+    WHERE S.isActive = [?Status{1|Active|3|Graduated|12|LOA}]
         AND S.<ADMINID>
 ) t1
 
