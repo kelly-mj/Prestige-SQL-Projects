@@ -6,7 +6,7 @@
 SELECT t2.Name
 	, t2.Program
 	, FORMAT(t2.programHours, 0) 'Program Hours'
-	, FORMAT(t2.hours, 0) AS 'Hours Scheduled'
+	, FORMAT(t2.hours, 0) AS 'Hours Attended'
 	, FORMAT(t2.SAPPeriod, 0) AS 'SAP Report'
 	, COALESCE(IF(t2.SAPReports > 0
 					, DATE_FORMAT(t2.dueDate, '<div style="background-color: #bdefaa; color: black;">%m/%d/%y</div>')
@@ -64,7 +64,7 @@ FROM (
 				INNER JOIN (SELECT programmeId, MAX(payPeriodHours) ppHours, MAX(payPeriodDisbPercent) disbPercent FROM PayPeriod GROUP BY programmeId) PP
 					ON PP.programmeId = R.programmeId
 
-				INNER JOIN (SELECT PFV.userId, PFV.fieldValue AS hours FROM ProfileFieldValues PFV WHERE PFV.fieldName = 'PROGRAM_HOURS_SCHEDULED') HOURS
+				INNER JOIN (SELECT PFV.userId, PFV.fieldValue AS hours FROM ProfileFieldValues PFV WHERE PFV.fieldName = 'PROGRAM_HOURS_ATTENDED') HOURS
 					ON HOURS.userId = S.studentId
 
 				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb2files, MAX(lastUpdateDtTm) AS lastUpload FROM FolderFileReltn
