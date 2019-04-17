@@ -44,6 +44,10 @@ WHERE S.<ADMINID>
 	AND CSR.isActive = 1
 	AND C.isActive = 1
 	AND (LENGTH(A.attendanceClockPunch) < (10*CP.punchCount + 5))
+	AND IF('[?Campus Select (leave blank to select all)]' = ''
+	    , S.<ADMINID>
+	    , ((S.studentCampus = '[?Campus Select (leave blank to select all)]') OR
+	       (S.studentCampus = (SELECT MAX(campusCode) FROM Campuses WHERE LOWER(campusName) = LOWER('[?Campus Select (leave blank to select all)]')) )) )
 
 ORDER BY CP.punchDate, S.lastName
 LIMIT 1000
