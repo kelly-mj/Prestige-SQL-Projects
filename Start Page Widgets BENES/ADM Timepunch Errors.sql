@@ -1,4 +1,4 @@
--- ADM Missing Timepunches and Attendance Record Errors
+-- ADM Timepunch Errors
 -- Kelly MJ  |  2/22/2019
 
 /* Count of students with an uncorrected, odd number of clock punches for a particular date */

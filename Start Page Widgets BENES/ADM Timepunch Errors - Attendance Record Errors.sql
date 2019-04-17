@@ -1,4 +1,4 @@
--- ADM Missing Timepunches - Attendance Record Errors
+-- ADM Timepunch Errors - Attendance Record Errors
 -- Kelly MJ  |  2/22/2019
 
 SELECT DATE_FORMAT(A.attendanceDate, '%m/%d/%Y') 'Attendance Date'

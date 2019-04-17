@@ -1,4 +1,4 @@
--- ADM Missing Timepunches - Missing Clock Outs
+-- ADM Timepunch Errors - Missing Clock Outs
 -- Kelly MJ  |  2/22/2019
 
 SELECT DATE_FORMAT(CP.punchDate, '%m/%d/%Y') 'Attendance Date'
