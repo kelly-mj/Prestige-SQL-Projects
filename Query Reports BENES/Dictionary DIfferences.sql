@@ -10,7 +10,7 @@ SELECT W.word 'Phrase'
 FROM (
 	SELECT wordId, translatedWord, REPLACE(REPLACE(REPLACE(translatedWord, 'Â ', ''), ' ', ''), ' ', '') AS translatedWordNoSpaces, lastUpdateDtTm
     FROM Translations WHERE isActive = 1 AND <ADMINID>
-    AND languageId = (SELECT languageId FROM Languages WHERE languageName = '[?Language]')) T
+    AND languageId = (SELECT languageId FROM Languages WHERE languageName = IF('[?Language]' = '', 'Prestige', '[?Language]'))) T
 
 
 INNER JOIN (SELECT wordId, word, REPLACE(REPLACE(word, ' ', ''), ' ', '') AS wordNoSpaces FROM Words WHERE isActive = 1) W
