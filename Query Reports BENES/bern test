@@ -13,9 +13,17 @@ SELECT
     AND Attendance.classId = Classes.classId
     AND Attendance.attendanceDate <= '[?To Date]') AS 'Actual Hours',
   Classes.className
-  /*********** kelly's additions ************/
-  /******************************************/
-  
+  /******* kelly's additions (SELECT) *******/
+  -- Disbursement 1 financial aid receieved
+  , (SELECT CONCAT('$', FORMAT(SUM(F.amountAwarded), 2)) FROM FinancialAidsDisbursements F
+     WHERE F.studentId = SDT.studentId AND F.disbursementNo = 1
+       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())) AS 'Disbursement 1 Sum'
+   -- Disbursement 2 financial aid receieved
+  , (SELECT CONCAT('$', FORMAT(SUM(F.amountAwarded), 2)) FROM FinancialAidsDisbursements F
+     WHERE F.studentId = SDT.studentId AND F.disbursementNo = 2
+       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())) AS 'Disbursement 2 Sum'
+  /***** END kelly's additions (SELECT) *****/
+
 FROM ClassStudentReltn
   INNER JOIN Classes
     ON ClassStudentReltn.classId = Classes.classId
@@ -24,8 +32,32 @@ FROM ClassStudentReltn
   INNER JOIN Students SDT
     ON SDT.studentId = Registrations.studentId
 
-  /*********** kelly's additions ************/
-  /******************************************/
+  /******* kelly's additions (JOINS) ********/
+  /*LEFT JOIN (SELECT studentId, dateExpected AS dateExpected1, amountAwarded AS amountAwarded1 FROM FinancialAidsDisbursements
+             WHERE isActive = 1 AND disbursementNo = 1) DISB1
+    ON DISB1.studentId = SDT.studentId
+  LEFT JOIN (SELECT studentId, dateExpected AS dateExpected2, amountAwarded AS amountAwarded2 FROM FinancialAidsDisbursements
+             WHERE isActive = 1 AND disbursementNo = 2) DISB2
+    ON DISB2.studentId = SDT.studentid
+  LEFT JOIN (SELECT studentId, dateExpected AS dateExpected3, amountAwarded AS amountAwarded3 FROM FinancialAidsDisbursements
+             WHERE isActive = 1 AND disbursementNo = 3) DISB3
+    ON DISB3.studentId = SDT.studentid
+  LEFT JOIN (SELECT studentId, dateExpected AS dateExpected4, amountAwarded AS amountAwarded4 FROM FinancialAidsDisbursements
+             WHERE isActive = 1 AND disbursementNo = 4) DISB4
+    ON DISB4.studentId = SDT.studentid*/
+
+-- pay period dates
+  /*
+  LEFT JOIN (SELECT registrationId, MAX(payPeriodDate) AS payPeriodDate1 FROM PayPeriodDates WHERE payPeriodNo = 1 AND isActive = 1 GROUP BY studentId) PP1
+    ON PP1.registrationId = Registrations.registrationId
+  LEFT JOIN (SELECT registrationId, MAX(payPeriodDate) AS payPeriodDate2 FROM PayPeriodDates WHERE payPeriodNo = 2 AND isActive = 1 GROUP BY studentId) PP2
+    ON PP2.registrationId = Registrations.registrationId
+  LEFT JOIN (SELECT registrationId, MAX(payPeriodDate) AS payPeriodDate3 FROM PayPeriodDates WHERE payPeriodNo = 3 AND isActive = 1 GROUP BY studentId) PP3
+    ON PP3.registrationId = Registrations.registrationId
+  LEFT JOIN (SELECT registrationId, MAX(payPeriodDate) AS payPeriodDate4 FROM PayPeriodDates WHERE payPeriodNo = 4 AND isActive = 1 GROUP BY studentId) PP4
+    ON PP4.registrationId = Registrations.registrationId
+  */
+  /***** END kelly's additions (JOINS) ******/
 
 WHERE SDT.isActive = 1
 AND Classes.className NOT LIKE '%Pathway%'
@@ -37,4 +69,12 @@ AND Registrations.isActive = 1
   AND ClassStudentReltn.isActive=1
   AND Registrations.startDate<='[?To Date]'
 and SDT.<ADMINID>
+  /******* kelly's additions (WHERE, GROUP BY) ********/
+/*AND DISB1.dateExpected1 BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())
+AND DISB2.dateExpected2 BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())
+AND DISB3.dateExpected3 BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())
+AND DISB4.dateExpected4 BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())
+*/
+-- GROUP BY Registrations.registrationId
+  /***** END kelly's additions (WHERE, GROUP BY) ******/
 ORDER BY Classes.className, SDT.lastName
