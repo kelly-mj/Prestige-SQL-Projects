@@ -13,16 +13,26 @@ SELECT
     AND Attendance.classId = Classes.classId
     AND Attendance.attendanceDate <= '[?To Date]') AS 'Actual Hours',
   Classes.className
-  /******* kelly's additions (SELECT) *******/
-  -- Disbursement 1 financial aid receieved
+/******* kelly's additions (SELECT) *******/
+  -- sum of Disbursement 1 financial aid receieved, per program, between the student's start date and the user-selected "To Date"
   , (SELECT CONCAT('$', FORMAT(SUM(F.amountAwarded), 2)) FROM FinancialAidsDisbursements F
-     WHERE F.studentId = SDT.studentId AND F.disbursementNo = 1
-       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())) AS 'Disbursement 1 Sum'
-   -- Disbursement 2 financial aid receieved
+     WHERE F.studentId = SDT.studentId
+       AND F.financialAidsId IN ()
+       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, '[?To Date]'), '[?To Date]')
+       AND F.disbursementNo = 1) AS 'Disbursement 1 Sum'
+  -- sum of Disbursement 2 financial aid receieved, per program, between the student's start date and the user-selected "To Date"
   , (SELECT CONCAT('$', FORMAT(SUM(F.amountAwarded), 2)) FROM FinancialAidsDisbursements F
-     WHERE F.studentId = SDT.studentId AND F.disbursementNo = 2
-       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, CURDATE()), CURDATE())) AS 'Disbursement 2 Sum'
-  /***** END kelly's additions (SELECT) *****/
+     WHERE F.studentId = SDT.studentId
+       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, '[?To Date]'), '[?To Date]')
+       AND F.disbursementNo = 2) AS 'Disbursement 2 Sum'
+  , -- disb 3 sum
+  , -- disb 4 sum
+/***** END kelly's additions (SELECT) *****/
+
+/******** kelly's additions (JOIN) ********/
+LEFT JOIN (SELECT studentId, MIN(awardYear) AS year1 FROM FinancialAids WHERE isActive = 1 AND ) YEAR1
+LEFT JOIN () YEAR2
+/****** END kelly's additions (JOIN) ******/
 
 FROM ClassStudentReltn
   INNER JOIN Classes
