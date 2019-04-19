@@ -1,0 +1,40 @@
+SELECT
+  SDT.studentId,
+  SDT.idNumber,
+  CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(SDT.studentId AS char), '">', SDT.firstName, ' ', SDT.lastName, '</a>') AS 'Student Name',
+  CONCAT(SDT.firstName, ' ', SDT.lastName) AS 'Name',
+  SDT.ssn AS 'SSN',
+  SDT.dateOfBirth AS 'DOB',
+  CASE SDT.isActive WHEN 1 THEN 'Active' WHEN 12 THEN 'LOA' END AS 'Status',
+  (SELECT
+      ROUND(SUM(Attendance.duration), 2) AS expr1
+    FROM Attendance
+    WHERE Attendance.studentId = SDT.studentId
+    AND Attendance.classId = Classes.classId
+    AND Attendance.attendanceDate <= '[?To Date]') AS 'Actual Hours',
+  Classes.className
+  /*********** kelly's additions ************/
+  /******************************************/
+  
+FROM ClassStudentReltn
+  INNER JOIN Classes
+    ON ClassStudentReltn.classId = Classes.classId
+  INNER JOIN Registrations
+    ON Registrations.registrationId = ClassStudentReltn.registrationId
+  INNER JOIN Students SDT
+    ON SDT.studentId = Registrations.studentId
+
+  /*********** kelly's additions ************/
+  /******************************************/
+
+WHERE SDT.isActive = 1
+AND Classes.className NOT LIKE '%Pathway%'
+AND Classes.className <> 'CAREER in Current Students'
+AND '[?To Date]' BETWEEN Classes.startDate AND Classes.endDate
+AND SDT.studentId <> 4046817
+AND Registrations.regStatus = 1
+AND Registrations.isActive = 1
+  AND ClassStudentReltn.isActive=1
+  AND Registrations.startDate<='[?To Date]'
+and SDT.<ADMINID>
+ORDER BY Classes.className, SDT.lastName
