@@ -1,56 +1,109 @@
 SELECT
-  SDT.studentId,
-  SDT.idNumber,
-  CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(SDT.studentId AS char), '">', SDT.firstName, ' ', SDT.lastName, '</a>') AS 'Student Name',
-  CONCAT(SDT.firstName, ' ', SDT.lastName) AS 'Name',
-  SDT.ssn AS 'SSN',
-  SDT.dateOfBirth AS 'DOB',
-  CASE SDT.isActive WHEN 1 THEN 'Active' WHEN 12 THEN 'LOA' END AS 'Status',
+  Students.studentId,
+  Students.idNumber,
+  CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(Students.studentId AS char), '">', Students.lastName, ', ', Students.firstName, '</a>') AS 'Student Name',
+  CONCAT(Students.firstName, ' ', Students.lastName) AS 'Name',
+  Students.ssn,
+  Students.dateOfBirth,
+  P.programmeName,
+  Classes.className,
+  Registrations.regStatus,
   (SELECT
       ROUND(SUM(Attendance.duration), 2) AS expr1
     FROM Attendance
-    WHERE Attendance.studentId = SDT.studentId
+    WHERE Attendance.studentId = Students.studentId
     AND Attendance.classId = Classes.classId
-    AND Attendance.attendanceDate <= '[?To Date]') AS 'Actual Hours',
-  Classes.className
-/******* kelly's additions (SELECT) *******/
-  -- sum of Disbursement 1 financial aid receieved, per program, between the student's start date and the user-selected "To Date"
-  , (SELECT CONCAT('$', FORMAT(SUM(F.amountAwarded), 2)) FROM FinancialAidsDisbursements F
-     WHERE F.studentId = SDT.studentId
-       AND F.financialAidsId IN ()
-       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, '[?To Date]'), '[?To Date]')
-       AND F.disbursementNo = 1) AS 'Disbursement 1 Sum'
-  -- sum of Disbursement 2 financial aid receieved, per program, between the student's start date and the user-selected "To Date"
-  , (SELECT CONCAT('$', FORMAT(SUM(F.amountAwarded), 2)) FROM FinancialAidsDisbursements F
-     WHERE F.studentId = SDT.studentId
-       AND F.dateExpected BETWEEN Registrations.startDate AND LEAST(COALESCE(Registrations.graduationDate, '[?To Date]'), '[?To Date]')
-       AND F.disbursementNo = 2) AS 'Disbursement 2 Sum'
-  , -- disb 3 sum
-  , -- disb 4 sum
-/***** END kelly's additions (SELECT) *****/
+    AND Attendance.attendanceDate <= '[?Snap Shot Date]') AS 'Actual Hours'
+  /****** kelly additions (WHERE) ******/
+  , CONCAT('$', COALESCE(FORMAT(FA2016_17a.refundSum, 2), 0)) AS '2016-2017 Disb 1'
+  , CONCAT('$', COALESCE(FORMAT(FA2016_17b.refundSum, 2), 0)) AS '2016-2017 Disb 2'
+  , CONCAT('$', COALESCE(FORMAT(FA2017_18a.refundSum, 2), 0)) AS '2017-2018 Disb 1'
+  , CONCAT('$', COALESCE(FORMAT(FA2017_18b.refundSum, 2), 0)) AS '2017-2018 Disb 2'
+  , CONCAT('$', COALESCE(FORMAT(FA2018_19a.refundSum, 2), 0)) AS '2018-2019 Disb 1'
+  , CONCAT('$', COALESCE(FORMAT(FA2018_19b.refundSum, 2), 0)) AS '2018-2019 Disb 2'
+  /**** END kelly additions (WHERE) ****/
+FROM Students
+  INNER JOIN Registrations ON Students.studentId = Registrations.studentId
+  INNER JOIN Programmes P ON P.programmeId = Registrations.programmeId
+  INNER JOIN ClassStudentReltn ON Registrations.registrationId = ClassStudentReltn.registrationId
+  INNER JOIN Classes ON ClassStudentReltn.classId = Classes.classId
 
-/******** kelly's additions (JOIN) ********/
-LEFT JOIN (SELECT studentId, MIN(awardYear) AS year1 FROM FinancialAids WHERE isActive = 1 AND ) YEAR1
-LEFT JOIN () YEAR2
-/****** END kelly's additions (JOIN) ******/
-
-FROM ClassStudentReltn
-  INNER JOIN Classes
-    ON ClassStudentReltn.classId = Classes.classId
-  INNER JOIN Registrations
-    ON Registrations.registrationId = ClassStudentReltn.registrationId
-  INNER JOIN Students SDT
-    ON SDT.studentId = Registrations.studentId
-
-WHERE SDT.isActive = 1
+/******* kelly additions (JOIN) *******/
+  -- 2016-2017
+  LEFT JOIN (SELECT studentId, SUM(refundAmount) AS refundSum
+	FROM StudentRefunds
+    WHERE disbursementNo = 1
+      AND refundDate <= '[?Snap Shot Date]'
+      AND isActive = 1
+      AND awardYear = '2016-2017'
+	GROUP BY studentId) FA2016_17a
+    ON FA2016_17a.studentId = Students.studentId
+  LEFT JOIN (SELECT studentId, SUM(refundAmount) AS refundSum
+	FROM StudentRefunds
+    WHERE disbursementNo = 2
+      AND refundDate <= '[?Snap Shot Date]'
+      AND isActive = 1
+      AND awardYear = '2016-2017'
+	GROUP BY studentId) FA2016_17b
+    ON FA2016_17b.studentId = Students.studentId
+  -- 2017-2018
+  LEFT JOIN (SELECT studentId, SUM(refundAmount) AS refundSum
+  	FROM StudentRefunds
+      WHERE disbursementNo = 1
+        AND refundDate <= '[?Snap Shot Date]'
+        AND isActive = 1
+        AND awardYear = '2017-2018'
+  	GROUP BY studentId) FA2017_18a
+      ON FA2017_18a.studentId = Students.studentId
+  LEFT JOIN (SELECT studentId, SUM(refundAmount) AS refundSum
+  	FROM StudentRefunds
+      WHERE disbursementNo = 2
+        AND refundDate <= '[?Snap Shot Date]'
+        AND isActive = 1
+        AND awardYear = '2017-2018'
+  	GROUP BY studentId) FA2017_18b
+      ON FA2017_18b.studentId = Students.studentId
+  -- 2018-2019
+  LEFT JOIN (SELECT studentId, SUM(refundAmount) AS refundSum
+  	FROM StudentRefunds
+      WHERE disbursementNo = 1
+        AND refundDate <= '[?Snap Shot Date]'
+        AND isActive = 1
+        AND awardYear = '2018-2019'
+  	GROUP BY studentId) FA2018_19a
+      ON FA2018_19a.studentId = Students.studentId
+  LEFT JOIN (SELECT studentId, SUM(refundAmount) AS refundSum
+  	FROM StudentRefunds
+      WHERE disbursementNo = 2
+        AND refundDate <= '[?Snap Shot Date]'
+        AND isActive = 1
+        AND awardYear = '2018-2019'
+  	GROUP BY studentId) FA2018_19b
+      ON FA2018_19b.studentId = Students.studentId
+/***** END kelly additions (JOIN) *****/
+WHERE Registrations.startDate <= '[?Snap Shot Date]'
+AND (Registrations.graduationDate IS NULL
+OR Registrations.graduationDate >= '[?Snap Shot Date]')
+AND Registrations.isActive = 1
+AND Registrations.regStatus <> 7
+AND Registrations.regStatus <> 14
+AND Registrations.regStatus <> 16
+AND Registrations.regStatus <> 17
+AND Registrations.regStatus <> 91
+AND P.programmeName <> 'Careers Pathway'
+AND Students.firstName NOT LIKE '%test%'
+AND ClassStudentReltn.isActive = 1
 AND Classes.className NOT LIKE '%Pathway%'
 AND Classes.className <> 'CAREER in Current Students'
-AND '[?To Date]' BETWEEN Classes.startDate AND Classes.endDate
-AND SDT.studentId <> 4046817
-AND Registrations.regStatus = 1
-AND Registrations.isActive = 1
-  AND ClassStudentReltn.isActive=1
-  AND Registrations.startDate<='[?To Date]'
-and SDT.<ADMINID>
-
-ORDER BY Classes.className, SDT.lastName
+AND '[?Snap Shot Date]' BETWEEN Classes.startDate AND Classes.endDate
+AND Students.studentId <> 4046817
+AND Students.<ADMINID>
+GROUP BY P.programmeId,
+         Students.lastName,
+         Students.firstName,
+         Classes.className,
+         Students.studentId,
+         Students.idNumber,
+         Students.ssn,
+         Students.dateOfBirth
+ORDER BY Classes.className
