@@ -1,4 +1,4 @@
--- Query Reportt: Leads from Two Months Ago
+-- [SHELL] Query Reportt: Leads from Two Months Ago
 -- Kelly MJ  |  09/10/2018
 -- 9/24/18 Kelly MJ: Changed from past week to current month timeframe
 
@@ -50,8 +50,7 @@ FROM (
 		AND DATE(C.creationDtTm) < LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
 		AND IF('[?Campus Select (leave blank to select all)]' = ''
 		    , C.campusCode LIKE '%'
-		    , ((C.campusCode = '[?Campus Select (leave blank to select all)]') OR
-		       (C.campusCode = (SELECT MAX(campusCode) FROM Campuses WHERE LOWER(campusName) = LOWER('[?Campus Select (leave blank to select all)]')) ) OR
+		    , ((CMP.PFVCampus = (SELECT MAX(campusName) FROM Campuses WHERE campusCode = '[?Campus Select (leave blank to select all)]')) OR
 			   (LOWER(CMP.PFVCampus) = LOWER('[?Campus Select (leave blank to select all)]'))  /*end condition 2*/)  /*end IF*/)
 
 	GROUP BY C.contactId
