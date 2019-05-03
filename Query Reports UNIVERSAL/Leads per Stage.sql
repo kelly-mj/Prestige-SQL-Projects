@@ -23,7 +23,7 @@ FROM (
 				, '8. GAIN'
 				, '86. Lost - Not Interested'
 				, '9. Future Attend Date'
-		)   --	(4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000050, 4000049)  -- previously used contactTypeIds
+		)
 
 	LEFT JOIN (
 		SELECT userId, fieldValue AS PFVCampus
@@ -34,8 +34,8 @@ FROM (
 	WHERE C.isActive = 1
 		AND C.<ADMINID>
 		AND IF('[?Campus Select (leave blank to select all)]' = ''
-		    , C.<ADMINID>
-		    , ((C.campusCode = '[?Campus Select (leave blank to select all)]') OR
+		    , C.campusCode LIKE '%'
+		    , ((CMP.PFVCampus = (SELECT MAX(campusName) FROM Campuses WHERE campusCode = '[?Campus Select (leave blank to select all)]')) OR
 			   (LOWER(CMP.PFVCampus) = LOWER('[?Campus Select (leave blank to select all)]'))  /*end condition 2*/)  /*end IF*/)
 ) t1
 
