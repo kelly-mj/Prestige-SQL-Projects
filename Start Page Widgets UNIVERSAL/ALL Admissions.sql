@@ -46,7 +46,7 @@
  							 FROM Campuses CP
  							 WHERE CP.campusName = CMP.fieldValue
  							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
-     	, CMP.fieldValue <> 'dummy' )
+     	, CMP.fieldValue <> 'delicious_kielbasa_sausage' )
 
  AND C.<ADMINID>
 
@@ -85,7 +85,7 @@ WHERE DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
     							 FROM Campuses CP
     							 WHERE CP.campusName = CMP.fieldValue
     							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
-        	, CMP.fieldValue <> 'dummy' )
+        	, CMP.fieldValue <> 'delicious_kielbasa_sausage' )
 	AND C.<ADMINID>
 
 
@@ -126,7 +126,7 @@ WHERE IF (NOT EXISTS (SELECT subAdminId
 							 FROM Campuses CP
 							 WHERE CP.campusName = CMP.fieldValue
 							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
-		, CMP.fieldValue <> 'dummy' )
+		, CMP.fieldValue <> 'delicious_kielbasa_sausage' )
 
 
 
@@ -165,7 +165,7 @@ WHERE DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
 								 FROM Campuses CP
 								 WHERE CP.campusName = CMP.fieldValue
 								 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
-			, CMP.fieldValue <> 'dummy' )
+			, CMP.fieldValue <> 'delicious_kielbasa_sausage' )
 	AND C.<ADMINID>
 
 
@@ -204,7 +204,7 @@ WHERE DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 3 MONTH))
 								 FROM Campuses CP
 								 WHERE CP.campusName = CMP.fieldValue
 								 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
-			, CMP.fieldValue <> 'dummy' )
+			, CMP.fieldValue <> 'delicious_kielbasa_sausage' )
 	AND C.<ADMINID>
 
 
