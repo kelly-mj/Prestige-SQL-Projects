@@ -1,16 +1,16 @@
--- ADM Admissions Widget
--- Author: ??  | ??/??/????
--- 9/10/18 Kelly Update: Added rows for Active Lead, Current LOA, Leads per month for past 3 months
--- 9/24/18 Kelly MJ: Repurposed widget for lead listing, moved total enrolled count to 'Management Dashboard,' added several rows of lead information breakdown.
+-- [Shell] ADM Admissions Widget
+-- Kelly MJ  |  5/3/2019
+-- NOTE: Each school has it's own description of contact types; for this widget to be accurate, the contactTypes list in each part of the query must be updated
 
 /*
  *  Active Leads
  */
  SELECT CONCAT('<strong>Active Leads in '
-	 			, IF(NOT EXISTS (SELECT subAdminId
+	 			, IF((NOT EXISTS (SELECT subAdminId
 			    					FROM SubAdmins
-			    					WHERE subAdminId = [?USERID]
-			    					AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+			    					WHERE subAdminId = [USERID]
+			    					AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0) )
+					 AND [USERID] <> 48)
 						, CMP.fieldValue
 						, 'All Campuses')
 				, '</strong>') AS 'Type'
@@ -37,14 +37,15 @@
  	ON CMP.userId = C.contactId
  	AND CMP.fieldName = 'CAMPUS'
 
- WHERE IF (NOT EXISTS (SELECT subAdminId
+ WHERE IF ((NOT EXISTS (SELECT subAdminId
  					FROM SubAdmins
- 					WHERE subAdminId = [?USERID]
+ 					WHERE subAdminId = [USERID]
  					AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+	 		AND [USERID] <> 48)
  		, CMP.fieldValue = ( SELECT CP.campusName
  							 FROM Campuses CP
  							 WHERE CP.campusName = CMP.fieldValue
- 							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND campusCode = CP.campusCode) )
+ 							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
      	, CMP.fieldValue <> 'dummy' )
 
  AND C.<ADMINID>
@@ -77,12 +78,13 @@ LEFT JOIN ProfileFieldValues CMP
 WHERE DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
 	AND IF (NOT EXISTS (SELECT subAdminId
     					FROM SubAdmins
-    					WHERE subAdminId = [?USERID]
+    					WHERE subAdminId = [USERID]
     					AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+			AND [USERID] <> 48
     		, CMP.fieldValue = ( SELECT CP.campusName
     							 FROM Campuses CP
     							 WHERE CP.campusName = CMP.fieldValue
-    							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND campusCode = CP.campusCode) )
+    							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
         	, CMP.fieldValue <> 'dummy' )
 	AND C.<ADMINID>
 
@@ -117,12 +119,13 @@ LEFT JOIN ProfileFieldValues CMP
 	AND CMP.fieldName = 'CAMPUS'
 WHERE IF (NOT EXISTS (SELECT subAdminId
 					FROM SubAdmins
-					WHERE subAdminId = [?USERID]
+					WHERE subAdminId = [USERID]
 					AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+		  AND [USERID] <> 48
 		, CMP.fieldValue = ( SELECT CP.campusName
 							 FROM Campuses CP
 							 WHERE CP.campusName = CMP.fieldValue
-							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND campusCode = CP.campusCode) )
+							 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
 		, CMP.fieldValue <> 'dummy' )
 
 
@@ -155,12 +158,13 @@ WHERE DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
 	AND DATE(C.creationDtTm) < LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))      AND C.<ADMINID>
 	AND IF (NOT EXISTS (SELECT subAdminId
 						FROM SubAdmins
-						WHERE subAdminId = [?USERID]
+						WHERE subAdminId = [USERID]
 						AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+			AND [USERID] <> 48
 			, CMP.fieldValue = ( SELECT CP.campusName
 								 FROM Campuses CP
 								 WHERE CP.campusName = CMP.fieldValue
-								 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND campusCode = CP.campusCode) )
+								 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
 			, CMP.fieldValue <> 'dummy' )
 	AND C.<ADMINID>
 
@@ -193,12 +197,13 @@ WHERE DATE(C.creationDtTm) > LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 3 MONTH))
 	AND DATE(C.creationDtTm) < LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
 	AND IF (NOT EXISTS (SELECT subAdminId
 						FROM SubAdmins
-						WHERE subAdminId = [?USERID]
+						WHERE subAdminId = [USERID]
 						AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+			AND [USERID] <> 48
 			, CMP.fieldValue = ( SELECT CP.campusName
 								 FROM Campuses CP
 								 WHERE CP.campusName = CMP.fieldValue
-								 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND campusCode = CP.campusCode) )
+								 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = CP.campusCode) )
 			, CMP.fieldValue <> 'dummy' )
 	AND C.<ADMINID>
 
