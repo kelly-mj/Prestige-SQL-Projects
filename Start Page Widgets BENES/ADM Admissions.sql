@@ -134,14 +134,7 @@ UNION
 SELECT CONCAT('<a target="_blank" href="admin_run_query.jsp?queryid='
 				, (SELECT CAST(Q.queryId AS CHAR) FROM Queries Q WHERE Q.queryTitle = 'Leads from Previous Month')
 				,'">Leads added in ', DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%M'), ' (link):</a>')
-	, CONCAT(C.lastName, ', ', C.firstName) AS name
-	, CMP.fieldValue AS contactCampus
-	, (SELECT CONCAT(lastName, ', ', firstName) FROM SubAdmins WHERE subAdminId = [?USERID]) AS subAdmin
-	, (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID]) AS subAdminCampus
-	, IF(CMP.fieldValue = ( SELECT CP.campusName
-						 FROM Campuses CP
-						 WHERE CP.campusName = CMP.fieldValue
-						 AND EXISTS (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND campusCode = CP.campusCode) ), 'pick', '') as test
+	, COUNT(C.contactId)
 FROM Contacts C
 INNER JOIN ContactTypes CT
 		ON CT.contactTypeId = C.contactTypeId
@@ -214,58 +207,3 @@ UNION	-- Link to leads per stage
 SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
 	, NULL
 FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Stage'
-
-
-/***** STILL NEEDS TO BE WRITTEN *****/
-/*
-UNION	-- Link to leads per program
-SELECT CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/view_startpage_query_report.jsp?queryid=', CAST(Q.queryId AS CHAR),'&type=spquery">', Q.queryTitle,' (link):</a>')
-	, NULL
-FROM CustomStartPageQueries Q WHERE Q.<ADMINID> AND Q.userType = 4 AND Q.queryTitle = 'Leads per Program'
-*/
-
-/*
-UNION	-- Leads from the previous month
-SELECT CONCAT('Leads from ', DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), "%M"), ': ')
-	, COUNT(C.contactId)
-FROM Contacts C
-WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049)
-	AND DATE(C.creationDtTm) >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), "%Y-%m-01")
-	AND DATE(C.creationDtTm) < DATE_FORMAT(CURDATE(), "%Y-%m-01")
-	AND C.<ADMINID>
-
--- UNION	-- Leads from 2 months ago
-UNION	-- Leads from the previous month
-SELECT CONCAT('Leads from ', DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 2 MONTH), "%M"), ': ')
-	, COUNT(C.contactId)
-FROM Contacts C
-WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049)
-	AND DATE(C.creationDtTm) >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 2 MONTH), "%Y-%m-01")
-	AND DATE(C.creationDtTm) < DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), "%Y-%m-01")
-	AND C.<ADMINID>
-
--- UNION	-- Leads from 3 months ago
-UNION	-- Leads from the previous month
-SELECT CONCAT('Leads from ', DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 3 MONTH), "%M"), ': ')
-	, COUNT(C.contactId)
-FROM Contacts C
-WHERE C.contactTypeId IN (4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000049)
-	AND DATE(C.creationDtTm) >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 3 MONTH), "%Y-%m-01")
-	AND DATE(C.creationDtTm) < DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 2 MONTH), "%Y-%m-01")
-	AND C.<ADMINID>
-*/
-
-/* LEADS TYPE LIST (40000xx)
- ...40: 1. New Leads
- ...41: 5. In Financial Aid
- ...42: 6. Nurturing
- ...43: 2. Left Message
- ...44: 3. Mailed Catalog
- ...45: 5. Working
- ...46: 6. Enrolled
- ...47: 8. GAIN
- ...48: 7. In-Financial
- ...49: 9. Future Attend Date
- ...50: 86. Lost - Not Interested
- ...51: 4. Made Appointment
-*/
