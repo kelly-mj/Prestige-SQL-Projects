@@ -1,5 +1,6 @@
 -- [SHELL] Leads per Stage
 -- Kelly MJ  |  04/26/2019
+-- NOTE: Each school has its own description of contact types; for this report to be accurate, the contactTypes list in each part of the query must be updated
 
 SELECT t1.type AS Stage
 	, COUNT(t1.contactId) AS 'Count'

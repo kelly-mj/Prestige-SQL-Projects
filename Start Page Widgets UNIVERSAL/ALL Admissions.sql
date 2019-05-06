@@ -1,6 +1,6 @@
 -- [SHELL] ALL Admissions Widget
 -- Kelly MJ  |  5/3/2019
--- NOTE: Each school has it's own description of contact types; for this widget to be accurate, the contactTypes list in each part of the query must be updated
+-- NOTE: Each school has its own description of contact types; for this widget to be accurate, the contactTypes list in each part of the query must be updated
 
 /*
  *  Active Leads

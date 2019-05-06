@@ -1,6 +1,6 @@
 -- [SHELL] Query Report: Leads from Current Month
 -- Kelly MJ  |  09/10/2018
--- 9/24/18 Kelly MJ: Changed from past week to current month timeframe
+-- NOTE: Each school has its own description of contact types; for this report to be accurate, the contactTypes list in each part of the query must be updated
 
 SELECT t1.PFVCampus AS Campus
 	, t1.name 'Contact Name'
