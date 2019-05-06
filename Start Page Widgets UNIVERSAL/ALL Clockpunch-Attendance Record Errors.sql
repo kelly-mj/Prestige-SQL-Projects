@@ -1,8 +1,26 @@
 -- [SHELL] ALL Timepunch Errors
 -- Kelly MJ  |  2/22/2019
 
+/* Header row: Displays Campus Name */
+SELECT CONCAT('<strong>Showing Results For '
+			   , IF((NOT EXISTS (SELECT subAdminId
+								   FROM SubAdmins
+								   WHERE subAdminId = [USERID]
+								   AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0) )
+					AND [USERID] <> 48)
+					   , CMP.campusName
+					   , 'All Campuses')
+			   , '</strong>') AS 'Report Type'
+	, NULL AS Count
+FROM Campuses CMP
+WHERE CMP.campusCode = (SELECT MAX(campusCode)
+					   FROM SubAdmins
+					   WHERE IF ([USERID] = 48, subAdminId <> 48, subAdminId = [USERID]))
+AND CMP.<ADMINID>
+
 /* Count of students with an uncorrected, odd number of clock punches for a particular date */
 	-- students who have an odd number of clock punches AND their clock punches were not corrected in post attendance
+UNION
 (SELECT CONCAT('<a target="_blank" href="admin_run_query.jsp?queryid='
 			, (SELECT CAST(MAX(Q.queryId) AS CHAR) FROM Queries Q WHERE Q.queryTitle = 'Timepunch Errors - Missing Clock Outs')
 			,'">Timepunch Errors - Missing Clock Outs</a>') AS 'Report Type'
