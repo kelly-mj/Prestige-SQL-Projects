@@ -1,4 +1,4 @@
--- [SHELL] Current SAP Report - Actual Hours
+-- [SHELL] SAP Manager - Actual Hours
 -- Kelly MJ  |  3/27/19
   -- Looks for students who have 20 hours remaining until their next SAP date, or are 50 hours past their last SAP date.
   -- Displays whether there is a SAP report for that period or not.
