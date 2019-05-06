@@ -1,4 +1,4 @@
--- [SHELL] Query Reportt: Leads from Two Months Ago
+-- [SHELL] Query Report: Leads from Two Months Ago
 -- Kelly MJ  |  09/10/2018
 -- NOTE: Each school has its own description of contact types; for this report to be accurate, the contactTypes list in each part of the query must be updated
 
@@ -20,8 +20,7 @@ FROM (
 
 	INNER JOIN ContactTypes CT
 		ON CT.contactTypeId = C.contactTypeId
-		AND CT.contactTypeId IN (
-			SELECT contactTypeId FROM ContactTypes WHERE typeName IN (
+		AND CT.typeName IN (
 				  '1. New Leads'
 				, '2. Left Message'
 				, '3. Mailed Catalog'
@@ -32,7 +31,6 @@ FROM (
 				, '8. GAIN'
 				, '9. Future Attend Date'
 			)
-		)   --	(4000040, 4000043, 4000044, 4000051, 4000045, 4000042, 4000048, 4000047, 4000050, 4000049)  -- previously used contactTypeIds
 
 	LEFT JOIN ProfileFieldValues PFV
 		ON PFV.userId = C.contactId

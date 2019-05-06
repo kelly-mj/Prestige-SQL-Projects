@@ -19,8 +19,7 @@
  FROM Contacts C
  INNER JOIN ContactTypes CT
  		ON CT.contactTypeId = C.contactTypeId
- 		AND CT.contactTypeId IN (
- 			SELECT contactTypeId FROM ContactTypes WHERE typeName IN (
+ 		AND CT.typeName IN (
  				  '1. New Leads'
  				, '2. Left Message'
  				, '3. Mailed Catalog'
@@ -31,7 +30,6 @@
  				, '8. GAIN'
  				, '9. Future Attend Date'
  			)
- 		)
 
  LEFT JOIN ProfileFieldValues CMP
  	ON CMP.userId = C.contactId
