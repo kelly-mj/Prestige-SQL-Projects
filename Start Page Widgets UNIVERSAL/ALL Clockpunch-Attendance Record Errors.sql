@@ -3,7 +3,9 @@
 
 /* Count of students with an uncorrected, odd number of clock punches for a particular date */
 	-- students who have an odd number of clock punches AND their clock punches were not corrected in post attendance
-(SELECT (SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(queryId AS CHAR), '&type=spquery">', queryTitle,'</a>') FROM CustomStartPageQueries WHERE queryTitle = 'Students Missing Clock Outs') AS 'Report Type'
+(SELECT CONCAT('<a target="_blank" href="admin_run_query.jsp?queryid='
+			, (SELECT CAST(MAX(Q.queryId) AS CHAR) FROM Queries Q WHERE Q.queryTitle = 'Timepunch Errors - Missing Clock Outs')
+			,'">Timepunch Errors - Missing Clock Outs</a>') AS 'Report Type'
 	, COUNT(CP.clockPunchId) AS Count
 
 FROM Students S
@@ -36,13 +38,22 @@ WHERE S.<ADMINID>
 	AND A.isActive = 1
 	AND (LENGTH(A.attendanceClockPunch) < (10*CP.punchCount + 5))		-- error hasn't been corrected in attendanceClockPunch
 	AND S.isActive IN (1, 12)
+	AND IF (NOT EXISTS (SELECT subAdminId
+						FROM SubAdmins
+						WHERE subAdminId = [USERID]
+						AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+			AND [USERID] <> 48
+			, EXISTS ( SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = S.studentCampus)
+			, S.studentCampus <> 'delicious_kielbasa_sausage' )
 )
 
 /* Count of students with inconsistencies in their attendance record */
 	-- students who were not marked as present, but have a nonzero duration
 	-- students who were not marked as present, but have at least 1 clock punch
 UNION (
-SELECT (SELECT CONCAT('<a target="_blank" href="view_startpage_query_report.jsp?queryid=', CAST(queryId AS CHAR), '&type=spquery">', queryTitle,'</a>') FROM CustomStartPageQueries WHERE queryTitle = 'Attendance Record Errors') AS 'Report Type'
+SELECT CONCAT('<a target="_blank" href="admin_run_query.jsp?queryid='
+				, (SELECT CAST(MAX(Q.queryId) AS CHAR) FROM Queries Q WHERE Q.queryTitle = 'Timepunch Errors - Attendance Record Errors')
+				,'">Timepunch Errors - Attendance Record Errors</a>') AS 'Report Type'
 	, COUNT(A.attendanceId) AS Count
 
 FROM Students S
@@ -66,6 +77,13 @@ WHERE S.<ADMINID>
 	AND A.attendanceDate >= DATE_FORMAT(CURDATE(), '%Y-01-01')
 	AND CSR.isActive = 1
 	AND C.isActive = 1
+	AND IF (NOT EXISTS (SELECT subAdminId
+						FROM SubAdmins
+						WHERE subAdminId = [USERID]
+						AND (subAdminTypeId IN (32, 35, 34) OR campusCode = 0))
+			AND [USERID] <> 48
+			, EXISTS ( SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND campusCode = S.studentCampus)
+			, S.studentCampus <> 'delicious_kielbasa_sausage' )
 
 ORDER BY A.attendanceDate, S.lastName
 LIMIT 1000
