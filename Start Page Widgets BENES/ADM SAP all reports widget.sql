@@ -1,4 +1,4 @@
--- BENES ADM All SAP Reports
+-- Query Report: All SAP Reports
 -- Kelly MJ | 3/27/19
 -- Displays whether there is a SAP report for SAP Periods 1, 2, 3, 4.
 
@@ -108,6 +108,10 @@ FROM (
 
     WHERE S.isActive = [?Status{1|Active|3|Graduated|12|LOA}]
         AND S.<ADMINID>
+        AND IF('[?Campus Select (leave blank to select all)]' = ''
+        	, S.studentCampus <> 'delicious_kielbasa_sausage'
+        	, ((S.studentCampus = '[?Campus Select (leave blank to select all)]') OR
+        	   (S.studentCampus = (SELECT MAX(campusCode) FROM Campuses WHERE LOWER(campusName) = LOWER('[?Campus Select (leave blank to select all)]')) )) )
 ) t1
 
 ORDER BY t1.Program, t1.lastName

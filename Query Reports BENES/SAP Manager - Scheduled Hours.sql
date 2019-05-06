@@ -1,4 +1,4 @@
--- BENES ADM Current SAP Report
+-- BENES ADM Current SAP Report - Scheduled Hours
 -- Kelly MJ  |  3/27/19
   -- Looks for students who have 20 hours remaining until their next SAP date, or are 50 hours past their last SAP date.
   -- Displays whether there is a SAP report for that period or not.
@@ -33,6 +33,7 @@ FROM (
 	FROM (
 		SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
 					, S.studentId
+					, S.studentCampus
 					, P.programmeName AS Program
 					, P.minClockHours AS programHours
 					, HOURS.hours
@@ -104,5 +105,9 @@ FROM (
 
 WHERE ( (t2.SAPReports < 0 OR t2.SAPReports IS NULL)
 		 OR (t2.SAPReports > 0 AND t2.lastUpload BETWEEN DATE_SUB(CURDATE(), INTERVAL 2 DAY) AND CURDATE()) )
+AND IF('[?Campus Select (leave blank to select all)]' = ''
+	, t2.studentCampus <> 'delicious_kielbasa_sausage'
+	, ((t2.studentCampus = '[?Campus Select (leave blank to select all)]') OR
+	   (t2.studentCampus = (SELECT MAX(campusCode) FROM Campuses WHERE LOWER(campusName) = LOWER('[?Campus Select (leave blank to select all)]')) )) )
 
 ORDER BY t2.SAPReports ASC, t2.dueDate ASC
