@@ -1,0 +1,25 @@
+-- [BENES] INS New Starts
+-- Kelly MJ  |  5/15/19
+-- This is a front-page widget for instructors which lists all the upcoming student/classes within 2 weeks of the strat date
+
+SELECT DATE_FORMAT(R.startDate, '%m/%d/%Y') AS 'Start Date'
+    , C.className
+    , CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+
+FROM ClassTeacherReltn CTR
+INNER JOIN Classes C ON C.classId = CTR.classId
+INNER JOIN ClassStudentReltn CSR ON CSR.classId = CTR.classId
+INNER JOIN Students S ON S.studentId = CSR.studentId
+INNER JOIN Registrations R ON R.studentId = S.studentId
+    AND R.startDate >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+    AND R.startDate <= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+
+WHERE CTR.isActive = 1
+AND C.isActive = 1
+AND CSR.isActive = 1
+AND S.isActive = 1
+AND R.isActive = 1
+AND CTR.teacherId = [USERID]
+AND CTR.<ADMINID>
+
+ORDER BY R.startDate ASC, S.lastName ASC
