@@ -1,0 +1,38 @@
+-- Developer: Zachary Bene
+-- Last Update: 02/21/2017
+-- Attendance Sense for Student Start Screens
+-- The purpose of this query is to show
+--		current attendance status of each student
+
+SELECT
+IFNULL(User_ID, ' ') AS 'User_ID'	,
+	CONCAT(SDT.firstName, ' ', SDT.lastName) AS Name,
+	CLS.className,
+	IF(Total_Punch % 2 = 1,
+		"Clocked In",
+		IF(Total_Punch % 2 = 0,
+			"Clocked Out",
+			IF(SDT.studentId = LOA.studentId,
+				'Leave of Absence',
+				'Absent'
+			))) AS 'Status',
+IFNULL(Last_Punch, ' ') AS 'Last Time Clocked'
+FROM
+	Students SDT
+	JOIN ClassStudentReltn CSR ON SDT.studentId = CSR.studentId AND NOT CSR.isActive = 0
+	JOIN Classes CLS ON CSR.classId = CLS.classId AND NOT CLS.isActive = 0
+	LEFT OUTER JOIN LeavesOfAbsence LOA ON SDT.studentId = LOA.studentId AND NOT LOA.isActive = 0
+	LEFT OUTER JOIN
+		(SELECT
+			userId AS User_ID,
+			DATE_FORMAT(MAX(punchTime), '%m-%d @ %l:%i') AS Last_Punch,
+			COUNT(userId) AS Total_Punch
+		FROM ClockPunches
+		WHERE CURDATE() = DATE(punchTime) AND NOT isActive = 0
+		GROUP BY User_ID
+		) AS CKP_CUS ON SDT.studentId = CKP_CUS.User_ID
+
+WHERE
+	SDT.<ADMINID>				AND
+	SDT.studentId = [USERID]	AND
+	NOT SDT.isActive = 0
