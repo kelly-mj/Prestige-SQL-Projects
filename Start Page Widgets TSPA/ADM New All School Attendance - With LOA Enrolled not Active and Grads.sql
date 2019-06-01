@@ -3,6 +3,7 @@
 -- adding count for teachers and calc for ratio
 -- removed LOA filtering so this widget will include LOA students
 -- left original SQL code for reference (after new code)
+-- Kelly MJ 2019-05-31: added requirements CSR.isActive = 1 and CSR.status = 0 (exclude students without active class enrollment)
 
 SELECT
     C.campusName,
@@ -21,6 +22,8 @@ AND R.isActive = 1
 AND P.isActive = 1
 AND S.firstName NOT LIKE '%test%'
 AND S.<ADMINID>
+AND CSR.isActive = 1
+AND CSR.status = 0
 GROUP BY C.campusCode
 
 -- Original SQL Code removed 2019-04-30 Bern
