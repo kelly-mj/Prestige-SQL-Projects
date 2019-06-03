@@ -1,4 +1,4 @@
--- [AOHD] ADM Campus Average Attendance
+-- [AOHD] ADM Campus Attendance Percentage
 -- Kelly MJ  |  06/03/2019
 
 SELECT CMP.campusName
