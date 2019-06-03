@@ -31,6 +31,7 @@ FROM (
         AND CSR.isActive = 1
         AND C.isActive=1
         AND C.subjectId IN (SELECT subjectId FROM GroupSubjectReltn GSR, CourseGroups CG WHERE CG.programmeId=R.programmeId and CG.isActive=1 and CG.courseGroupId=GSR.courseGroupId and GSR.isActive=1)
+        AND S.isActive <> 14
     GROUP BY R.studentId
 ) t1
 
