@@ -1,5 +1,6 @@
 -- [AOHD] ADM Campus Attendance Percentage
 -- Kelly MJ  |  06/03/2019
+-- This widget shows the ratio of overall attended hours to overall scheduled hours. Separated by campus.
 
 SELECT CMP.campusName
     , FORMAT(SUM(t1.hoursAtt), 0) AS 'Total Hours Attended'
