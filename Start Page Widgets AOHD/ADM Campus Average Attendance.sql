@@ -2,6 +2,8 @@
 -- Kelly MJ  |  06/03/2019
 
 SELECT C.campusName AS Campus
+    , FORMAT(SUM(t1.hoursAtt), 0) AS 'Total Hours Attended'
+    , FORMAT(SUM(t1.hoursSch), 0) AS 'Total Hours Scheduled'
     , CONCAT(FORMAT(100*SUM(t1.hoursAtt)/SUM(t1.hoursSch), 2), '%') AS 'Attendance Percentage'
 
 FROM (
