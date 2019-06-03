@@ -13,7 +13,6 @@ FROM (
     FROM Students S
     INNER JOIN (SELECT userId, fieldValue FROM ProfileFieldValues WHERE fieldName = 'PROGRAM_HOURS_ATTENDED') ATT
         ON ATT.userId = S.studentId
-    WHERE S.isActive IN (1, 3, 12, 15)
 ) t1
 
 INNER JOIN Campuses C ON C.campusCode = t1.studentCampus
