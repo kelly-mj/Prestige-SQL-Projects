@@ -1,4 +1,4 @@
--- [AOHD] Hours for Students with Contract Grad Date
+-- [AOHD] Student Hours with Contract Grad Date Range
 -- Kelly MJ  |  06/03/2019
 
 SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Student'
