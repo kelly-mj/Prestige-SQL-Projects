@@ -1,22 +1,37 @@
 -- [AOHD] ADM Campus Average Attendance
 -- Kelly MJ  |  06/03/2019
 
-SELECT C.campusName AS Campus
+SELECT CMP.campusName
     , FORMAT(SUM(t1.hoursAtt), 0) AS 'Total Hours Attended'
-    , FORMAT(SUM(t1.hoursSch), 0) AS 'Total Hours Scheduled'
-    , CONCAT(FORMAT(100*SUM(t1.hoursAtt)/SUM(t1.hoursSch), 2), '%') AS 'Attendance Percentage'
+    , FORMAT(SUM(SCH.hoursSch), 0) AS 'Total Hours Scheduled'
+    , CONCAT(FORMAT(100*SUM(t1.hoursAtt)/SUM(SCH.hoursSch), 2), '%') AS 'Attendance Percentage'
 
 FROM (
-    SELECT S.studentCampus
-        , ATT.fieldValue AS hoursAtt
-        , (SELECT fieldValue FROM ProfileFieldValues WHERE userId = S.studentId AND fieldName = 'PROGRAM_HOURS_SCHEDULED') AS hoursSch
+    SELECT SUM(A.duration) AS hoursAtt
+        , S.studentId
+        , S.studentCampus
+
     FROM Students S
-    INNER JOIN (SELECT userId, fieldValue FROM ProfileFieldValues WHERE fieldName = 'PROGRAM_HOURS_ATTENDED') ATT
-        ON ATT.userId = S.studentId
-) t1
+    INNER JOIN (SELECT MAX(registrationId) maxReg, studentId FROM Registrations WHERE isActive = 1 GROUP BY studentId) RR
+        ON RR.studentId = S.studentId
+    INNER JOIN Registrations R ON R.studentId = S.studentId
+        AND RR.maxReg = R.registrationId
+    INNER JOIN Attendance A ON A.studentId = R.studentId
+    INNER JOIN ClassStudentReltn CSR ON CSR.studentId = R.studentId
+    INNER JOIN Classes C ON C.classId = CSR.classId
 
-INNER JOIN Campuses C ON C.campusCode = t1.studentCampus
+    WHERE A.attendanceDate >= R.startDate
+        AND A.isActive = 1
+        AND A.classId = C.classId
+        AND CSR.isActive = 1
+        AND C.isActive=1
+        AND C.subjectId IN (SELECT subjectId FROM GroupSubjectReltn GSR, CourseGroups CG WHERE CG.programmeId=R.programmeId and CG.isActive=1 and CG.courseGroupId=GSR.courseGroupId and GSR.isActive=1)
+        AND S.<ADMINID>
 
-WHERE C.<ADMINID>
+    GROUP BY R.studentId
+    ) t1
+INNER JOIN (SELECT userId, fieldValue AS hoursSch FROM ProfileFieldValues WHERE fieldName = 'PROGRAM_HOURS_SCHEDULED') SCH
+    ON SCH.userId = t1.studentId
+INNER JOIN Campuses CMP ON CMP.campusCode = t1.studentCampus
 
-GROUP BY C.campusCode
+GROUP BY t1.studentCampus
