@@ -9,21 +9,22 @@
 ( SELECT '<strong>All Currently Active Students</strong>' AS 'Report Type'
 	, CONCAT('<strong>', COUNT(DISTINCT S.studentId), '</strong>') AS Count
 
-FROM Students S
-INNER JOIN ( SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 AND startDate <= CURDATE() GROUP BY studentId ) RR
-ON RR.studentId = S.studentId
-INNER JOIN Registrations R ON R.studentId = S.studentId AND R.registrationId = RR.maxReg AND R.isActive = 1
-INNER JOIN Programmes P ON P.programmeId = R.programmeId AND P.isActive = 1
-INNER JOIN ClassStudentReltn CSR ON CSR.studentId = S.studentId
+FROM Registrations R
+  INNER JOIN Students S ON R.studentId = S.studentId
+  INNER JOIN Programmes P ON P.programmeId = R.programmeId
+  INNER JOIN ClassStudentReltn CSR ON R.registrationId = CSR.registrationId
+  INNER JOIN ClassTeacherReltn CTR ON CSR.classId = CTR.classId
+  INNER JOIN Campuses C ON S.studentCampus = C.campusCode
 
-WHERE S.<ADMINID>
-	AND S.isActive IN (1)
-	AND R.regStatus IN (1)
-	AND R.startDate <= CURDATE()
-	AND S.firstName NOT LIKE '%test%'
-	AND CSR.isActive = 1
-	AND CSR.status = 0
-	AND R.programmeId IN ( SELECT programmeId FROM Programmes WHERE programmeName NOT LIKE '%Career%' ) )
+WHERE S.isActive = 1
+AND R.regStatus = 1
+AND R.startDate <= CURDATE()
+AND R.isActive = 1
+AND P.isActive = 1
+AND S.firstName NOT LIKE '%test%'
+AND S.<ADMINID>
+AND CSR.isActive = 1
+AND CSR.status = 0 )
 
 
 /****************************************************************************************
