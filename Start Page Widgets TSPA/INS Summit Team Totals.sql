@@ -2,6 +2,7 @@
 -- Kelly MJ  |  6/9/2019
 -- Displays the number of services/customers per student in a teacher's summit team in the current summit period
 
+/*****************  Display date range  *****************/
 SELECT 'Summit Period: ' AS 'Team Name'
     , CASE WHEN MONTH(CURDATE()) = 1
             THEN CONCAT('12/01/', YEAR(CURDATE())-1, ' - ', DATE_FORMAT(LAST_DAY(CURDATE()), '%m/%d/%Y'))
@@ -16,6 +17,7 @@ SELECT 'Summit Period: ' AS 'Team Name'
     , NULL AS '# Services'
     , NULL AS '# Customers'
 
+/*****************  Display list of students on instructor team  *****************/
 UNION
 ( SELECT PFV.fieldValue AS 'Team Name'
 	, CONCAT(S.lastName, ', ', S.firstName) AS 'Student Name' -- student Name
@@ -48,7 +50,7 @@ WHERE S.isActive = 1
     AND S.<ADMINID>
 GROUP BY S.studentId )
 
-
+/*****************  Display team totals  *****************/
 UNION
 ( SELECT NULL
 	, '<div style="text-align:left;"><strong>Totals:</strong></div>'
