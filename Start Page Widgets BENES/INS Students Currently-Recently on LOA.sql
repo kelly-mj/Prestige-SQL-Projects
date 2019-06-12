@@ -2,12 +2,9 @@
 -- Kelly MJ  |  6/9/2018
 -- Displays students in instructor's class(es) who are currently LOA or have returned within the past 15 days.
 
-SELECT CMP.campusName
-	, CSR.className
-    -- , (SELECT CONCAT(T.lastName, ', ', T.firstName) FROM Teachers T WHERE T.teacherId = CSR.teacherId) AS Teacher
-    -- , CSR.teacherId
-    , S.idNumber AS 'ID Number'
-    , CONCAT(S.lastName, ', ', S.firstName) AS 'Student Name'
+SELECT CONCAT('<a target="_blank" href="view_class_roster.jsp?classid=', CAST(CSR.classId AS CHAR), '&semesterid=4000441">', CSR.className, '</a>') AS Class
+    , S.idNumber AS 'Student ID'
+    , CONCAT(S.lastName, ', ', S.firstName) AS 'Name'
     , DATE_FORMAT(LOA.leaveDate, '%m/%d/%Y') AS 'Leave Date'
     , DATE_FORMAT(LOA.expectedReturnDate, '%m/%d/%Y') 'Expected Return'
     , DATE_FORMAT(LOA.returnDate, '%m/%d/%Y') 'Return Date'
@@ -27,5 +24,5 @@ WHERE LOA.isActive = 1
   AND (LOA.returnDate IS NULL OR LOA.returnDate >= DATE_SUB(CURDATE(), INTERVAL 15 DAY))
   AND S.<ADMINID>
   AND CSR.teacherId = [USERID]
-  
+
 ORDER BY CSR.className, S.lastName
