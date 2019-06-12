@@ -17,7 +17,7 @@ SELECT t1.name
 
 FROM (
 
-    SELECT CONCAT('<a target="_blank" href="view_class_roster.jsp?classid=', CAST(CS.classId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+    SELECT CONCAT('<a target="_blank" href="view_class_roster.jsp?classid=', CAST(CS.classId AS CHAR), '&semesterid=4000441">', S.lastName, ', ', S.firstName, '</a>') AS Name
 		, CONCAT(S.lastname, ', ', S.firstName) AS names
 		, P.programmeName AS Program
         , SUM(A.duration) AS hoursAtt
