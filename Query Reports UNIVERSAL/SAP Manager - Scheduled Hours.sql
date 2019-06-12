@@ -14,21 +14,16 @@ SELECT t2.Name
 							, DATE_FORMAT(t2.dueDate, '%m/%d/%y')
 							, DATE_FORMAT(t2.dueDate, '<div style="background-color: #ffb7af; color: black;">%m/%d/%y</div>')))
 			, 'No due date') 'Due Date'
-	, IF(t2.SAPReports > 0
+	, IF((t2.SAPReports > 0 OR t2.SAPReports IS NOT NULL)
 		, CONCAT(t2.SAPurl, 'Yes</a>')
         , CONCAT(t2.SAPurl, 'No', IF(t2.dueDate < CURDATE(), '; Past due', ''),'</a>')) 'SAP Report Status'
+	, t2.SAPReports
 
 FROM (
 	SELECT t1.*
 		, (SELECT MAX(PPD.payPeriodDate) FROM PayPeriodDates PPD WHERE PPD.studentId = t1.studentId AND PPD.payPeriodNo = t1.SAPPeriod GROUP BY PPD.studentId) AS dueDate
-        , CASE t1.SAPPeriod
-			WHEN 1 THEN t1.disb2files
-			WHEN 2 THEN t1.disb3files
-			WHEN 3 THEN t1.disb4files END AS SAPReports
-		, CASE t1.SAPPeriod
-			WHEN 1 THEN CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1) AS CHAR), SAPurlEnd)
-			WHEN 2 THEN CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1) AS CHAR), SAPurlEnd)
-			WHEN 3 THEN CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1) AS CHAR), SAPurlEnd) END AS SAPurl
+        , t1.disb2files AS SAPReports
+		, CONCAT(SAPurlStart, CAST((SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Education' AND isActive = 1 AND userType = 1) AS CHAR), SAPurlEnd) AS SAPurl
 
 	FROM (
 		SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
@@ -41,8 +36,6 @@ FROM (
 					, PP.ppHours		-- Hours in matching program (1200, 600, 360)
 					, PP.disbPercent	-- How the payments are split up (100%, 50%, 25% per pay period)
 					, DISB2.disb2files
-					, DISB3.disb3files
-					, DISB4.disb4files
 					, CASE WHEN PP1.period1 - HOURS.hours BETWEEN -50 AND 50 THEN 1		-- find pay period of student
 						   WHEN PP2.period2 - HOURS.hours BETWEEN -50 AND 50 THEN 2
                            WHEN PP3.period3 - HOURS.hours BETWEEN -50 AND 50 THEN 3
@@ -69,22 +62,10 @@ FROM (
 					ON HOURS.userId = S.studentId
 
 				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb2files, MAX(lastUpdateDtTm) AS lastUpload FROM FolderFileReltn
-							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
+							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Education' AND isActive = 1 AND userType = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = '07 SAPs' AND isActive = 1)
 							GROUP BY userId) DISB2
 			        ON DISB2.userId = S.studentId
-
-				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb3files, MAX(lastUpdateDtTm) AS lastUpload FROM FolderFileReltn
-							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 3' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 2' AND isActive = 1)
-							GROUP BY userId) DISB3
-			        ON DISB3.userId = S.studentId
-
-			    LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb4files, MAX(lastUpdateDtTm) AS lastUpload FROM FolderFileReltn
-							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 4' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 3' AND isActive = 1)
-							GROUP BY userId) DISB4
-			        ON DISB4.userId = S.studentId
 
 				LEFT JOIN (SELECT registrationId, MAX(payPeriodHours) AS period1 FROM PayPeriodDates WHERE payPeriodNo = 1 GROUP BY registrationId) PP1
 					ON PP1.registrationId = R.registrationId
