@@ -1,4 +1,4 @@
--- [AOHD] ADM Last 30 Days of Inactive Students
+-- [AOHD] ADM Inactive Students from Past 30 Days
 -- Kelly MJ  |  6/10/2019
 
 SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', CAST(S.firstName AS CHAR), ' ', CAST(S.lastName AS CHAR), '</a>') AS Name
