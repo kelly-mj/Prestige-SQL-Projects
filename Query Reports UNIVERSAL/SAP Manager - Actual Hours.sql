@@ -70,7 +70,7 @@ FROM (
 
 				LEFT JOIN (SELECT userId, COUNT(folderFileReltnId) AS disb2files, MAX(lastUpdateDtTm) AS lastUpload FROM FolderFileReltn
 							WHERE folderFolderReltnId = (SELECT folderFolderReltnId FROM FolderFolderReltn WHERE folderName = 'Disbursement 2' AND isActive = 1)
-							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP 1' AND isActive = 1)
+							  AND documentTypeId = (SELECT documentTypeId FROM DocumentType WHERE documentType = 'SAP%' AND isActive = 1)
 							GROUP BY userId) DISB2
 			        ON DISB2.userId = S.studentId
 
