@@ -1,4 +1,4 @@
--- [TSPA] ADM, COMP, FIN At Risk
+-- [TSPA] INS At Risk Students
 -- Kelly MJ  |  5/22/2019
 -- Displays students who have missed over 65% of their allowed missed hours (program-specific)
 
@@ -17,7 +17,7 @@ SELECT t1.name
 
 FROM (
 
-    SELECT CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+    SELECT CONCAT('<a target="_blank" href="view_class_roster.jsp?classid=', CAST(CS.classId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
 		, CONCAT(S.lastname, ', ', S.firstName) AS names
 		, P.programmeName AS Program
         , SUM(A.duration) AS hoursAtt
@@ -72,10 +72,10 @@ FROM (
 		AND SCH.fieldName = 'PROGRAM_HOURS_SCHEDULED'
 
 	WHERE S.isActive IN (1, 12)
-    -- AND S.<ADMINID>
+    AND S.<ADMINID>
 	AND A.isActive = 1
 	AND A.attendanceDate >= R.startDate
-	AND CS.teacherId = [?USERID]
+	AND CS.teacherId = [USERID]
 
 	GROUP BY R.registrationId
 ) t1
