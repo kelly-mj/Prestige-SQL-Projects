@@ -2,7 +2,7 @@
 -- Kelly MJ 06/12/2019 - whole lot of changes, refer to github.com/tinytacooo/Prestige-SQL-Projects for full history
 
 SELECT C.className AS 'Class'
-    , CONCAT('<a target="_blank" href="view_attendance.jsp?semesterid=4000441&classid=', CAST(C.classId AS CHAR), '&subjectid=', CAST(C.subjectId AS CHAR), '&studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+    , CONCAT('<a target="_blank" href="view_attendance.jsp?semesterid=', CAST(C.semesterId AS CHAR), '&classid=', CAST(C.classId AS CHAR), '&subjectid=', CAST(C.subjectId AS CHAR), '&studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
     , CASE WHEN S.isActive = 12
 			  THEN 'on LOA'
          WHEN CP.punchCount%2 = 0
