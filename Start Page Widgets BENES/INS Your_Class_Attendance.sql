@@ -13,7 +13,7 @@
        -- Also changed criteria for Absent status to a student who has not clocked in when the class has been in session for an hour
        -- Now using 'clockedStatus' instead of counting daily clockpunches to determine if a student is present
     -- Sorted by class names, ascending start times
-    
+
 -- Update: 03/16/2017 by Zachary Bene
     -- switched studentId with idNumber
 -- Attendance Sense for Teacher Start Screens
@@ -21,18 +21,20 @@
     -- Current attendance status of each student
     -- Filtered by teacher for the teacher start page
 
-SELECT
-    S.idNumber
+SELECT S.idNumber
     , CONCAT(S.firstName, ' ', S.lastName) AS Name
     , C.className AS 'Class Name'
-    , CASE WHEN CP.clockedStatus % 2 = 1
+    , CASE WHEN LOA.leaveDate IS NOT NULL AND LOA.returnDate IS NULL
+            THEN 'Leave of Absence'
+         WHEN CP.clockedStatus = 2
+              THEN 'Clocked Out'
+         WHEN CP.clockedStatus = 1
               THEN 'Clocked In'
-         WHEN LOA.leaveDate IS NOT NULL AND LOA.returnDate IS NULL
-              THEN 'Leave of Absence'
-         WHEN CP.clockedStatus % 2 = 0
-              THEN IF(CURTIME() BETWEEN CS.cutoff AND CS.endTime, 'Absent', 'Clocked Out')
+         WHEN CP.clockedStatus = 0
+              THEN 'Manual'
          ELSE 'Clocked Out'
-      END AS 'Last Time Clocked'
+       END AS 'Status'
+     , DATE_FORMAT(CP.punchTime, '%d/%m @ %h:%i')
 
 FROM (SELECT R.studentId
            , R.registrationId
@@ -45,47 +47,22 @@ FROM (SELECT R.studentId
       GROUP BY R.studentId
       ) REG
 
-INNER JOIN Students S
-ON REG.studentId = S.studentId
-AND S.isActive IN (1, 12)
-
-JOIN ClassStudentReltn CSR
-ON S.studentId = CSR.studentId
-AND CSR.isActive = 1 -- Changed from AND NOT CSR.isActive = 0
-AND CSR.status < 2
-
-JOIN Classes C
-ON CSR.classId = C.classId
-AND C.isActive = 1 -- Changed from AND NOT C.isActive = 0
-
-JOIN (
-    SELECT CL.classId
-         , TIME(CL.startTime * 100) AS startTime
-         , ADDTIME(TIME(CL.startTime * 100), '01:00:00') AS cutoff
-         , TIME(CL.endTime * 100) AS endTime
-    FROM ClassSchedules CL
-    ) CS
-ON CS.classId = C.classId
-
-INNER JOIN ClassTeacherReltn CTR
-ON CTR.classId = C.classId
-
-LEFT OUTER JOIN LeavesOfAbsence LOA
-ON S.studentId = LOA.studentId
-AND LOA.isActive = 1 -- Changed from AND NOT LOA.isActive = 0
-
-LEFT OUTER JOIN
-        (SELECT CKP.userId
-            , DATE_FORMAT(MAX(punchTime), '%m-%d @ %l:%i') AS Last_Punch
-            , CKP.clockedStatus
-        FROM ClockPunches CKP
-        WHERE CURDATE() = DATE(CKP.punchTime)
-              AND CKP.isActive = 1 -- Changed from != 0
-        GROUP BY CKP.userId
-        ) AS CP
-ON S.studentId = CP.userId
+INNER JOIN Students S ON REG.studentId = S.studentId
+INNER JOIN ClassStudentReltn CSR ON S.studentId = CSR.studentId
+INNER JOIN Classes C ON CSR.classId = C.classId
+LEFT JOIN ( SELECT CPPP.userId, CPPP.punchTime, CPPP.clockedStatus
+            FROM ( SELECT userId, MAX(clockPunchId) as maxPunch FROM ClockPunches WHERE isActive = 1 GROUP BY userId ) CPP
+            INNER JOIN ClockPunches CPPP ON CPPP.userId = CPP.userId
+                AND CPPP.clockPunchId = CPP.maxPunch ) CP
+    ON CP.userId = S.studentId
+LEFT OUTER JOIN LeavesOfAbsence LOA ON S.studentId = LOA.studentId
 
 WHERE CTR.teacherId = [USERID]
+AND S.isActive IN (1, 12)
+AND CSR.isActive = 1
+AND CSR.status < 2
+AND C.isActive = 1
+AND LOA.isActive = 1
 
 GROUP BY S.idNumber
 
