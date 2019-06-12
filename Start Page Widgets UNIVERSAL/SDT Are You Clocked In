@@ -4,35 +4,33 @@
 -- The purpose of this query is to show
 --		current attendance status of each student
 
-SELECT
-IFNULL(User_ID, ' ') AS 'User_ID'	,
-	CONCAT(SDT.firstName, ' ', SDT.lastName) AS Name,
-	CLS.className,
-	IF(Total_Punch % 2 = 1,
-		"Clocked In",
-		IF(Total_Punch % 2 = 0,
-			"Clocked Out",
-			IF(SDT.studentId = LOA.studentId,
-				'Leave of Absence',
-				'Absent'
-			))) AS 'Status',
-IFNULL(Last_Punch, ' ') AS 'Last Time Clocked'
-FROM
-	Students SDT
-	JOIN ClassStudentReltn CSR ON SDT.studentId = CSR.studentId AND NOT CSR.isActive = 0
-	JOIN Classes CLS ON CSR.classId = CLS.classId AND NOT CLS.isActive = 0
-	LEFT OUTER JOIN LeavesOfAbsence LOA ON SDT.studentId = LOA.studentId AND NOT LOA.isActive = 0
-	LEFT OUTER JOIN
-		(SELECT
-			userId AS User_ID,
-			DATE_FORMAT(MAX(punchTime), '%m-%d @ %l:%i') AS Last_Punch,
-			COUNT(userId) AS Total_Punch
-		FROM ClockPunches
-		WHERE CURDATE() = DATE(punchTime) AND NOT isActive = 0
-		GROUP BY User_ID
-		) AS CKP_CUS ON SDT.studentId = CKP_CUS.User_ID
+SELECT S.idNumber AS 'ID Number'
+    , CONCAT(S.lastName, ', ', S.firstName) AS Name
+	, GROUP_CONCAT(C.className SEPARATOR '</br>') AS 'Enrolled Class(es)'
+	, IF(COUNT(CP.clockPunches)%2 = 0, 'Clocked Out', 'Clocked In') AS 'Clocked Status'
+    -- -- somehow, determine absences
+    , DATE_FORMAT(MAX(CP.punchTime), '%m-%d @ %l:%i %p') AS 'Last Punch Time'
 
-WHERE
-	SDT.<ADMINID>				AND
-	SDT.studentId = [USERID]	AND
-	NOT SDT.isActive = 0
+FROM Students S
+	JOIN ClassStudentReltn CSR ON S.studentId = CSR.studentId AND CSR.isActive = 1
+	JOIN Classes C ON CSR.classId = CLS.classId AND C.isActive = 1
+	LEFT OUTER JOIN LeavesOfAbsence LOA ON S.studentId = LOA.studentId
+	LEFT OUTER JOIN (
+        SELECT CP.*
+        FROM (SELECT DATE(MAX(punchTime)) AS lastDate FROM ClockPunches
+                WHERE isActive > 0
+            --    AND userId [USERID]
+            ) CPP
+            INNER JOIN ClockPunches CP ON CP.userId = CPP.userId
+        WHERE DATE(CP.punchTime) = CPP.lastDate
+            AND CP.isActive > 0
+    ) CP ON CP.userId = S.studentId
+
+WHERE S.isActive = 1
+	-- AND S.<ADMINID>
+    AND LOA.leaveDate <= CURDATE()
+    AND (LOA.returnDate IS NULL OR LOA.returnDate > CURDATE())
+    AND LOA.isActive = 1
+	-- AND SDT.studentId = [USERID]
+
+GROUP BY S.studentId
