@@ -28,9 +28,8 @@ INNER JOIN ProfileFieldValues CMP
     AND CMP.fieldValue = (SELECT fieldValue FROM ProfileFieldValues WHERE userId = [USERID] AND fieldName = 'CAMPUS')
 
 WHERE SUBSTRING(CT.typeName, 1, 1) IN ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
-  AND SUBSTRING(CT.typeName, 1, 1) <> '8'		-- exclude GAIN Leads
   AND SUBSTRING(CT.typeName, 1, 2) <> '86'		-- exclude Lost/Not Interested Leads
--- AND RD.fieldValue <= CURDATE()
+  AND (RD.fieldValue <= CURDATE() OR RD.fieldValue IS NULL)
 AND C.<ADMINID>
 
 ORDER BY RD.fieldValue, CT.typeName, C.lastName
