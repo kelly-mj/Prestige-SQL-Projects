@@ -40,6 +40,6 @@ AND CSR.status < 2
 AND C.isActive = 1
 AND C.<ADMINID>
 
-GROUP BY S.studentId
+GROUP BY CSR.ClassStudentReltnId
 
 ORDER BY C.className, S.lastName
