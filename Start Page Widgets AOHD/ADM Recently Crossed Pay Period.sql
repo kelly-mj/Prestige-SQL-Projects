@@ -11,6 +11,7 @@ SELECT t1.Name
 FROM (
 	SELECT S.studentId
 		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS Name
+        , S.lastName
 		, CAST(HOURS.fieldValue AS decimal(6, 2)) AS attHours
 		, P.programmeName AS Program
 		, P.reqClockHour
@@ -36,3 +37,4 @@ FROM (
 ) t1
 
 WHERE (t1.attHours - t1.reqClockHour - (SELECT MAX(payPeriodHours) FROM PayPeriodDates WHERE studentId = t1.studentId AND payPeriodHours < t1.attHours)) < 5
+ORDER BY t1.Campus, t1.lastName
