@@ -18,7 +18,7 @@ FROM (
         , IF(ATT.firstDay IS NOT NULL, 'Yes', '<div style="color: red;">No</div>') AS day1Att
         , COALESCE(100*(SELECT fieldValue FROM ProfileFieldValues WHERE userId = S.studentId AND fieldName = 'PROGRAM_HOURS_ATTENDED')/SCH.fieldValue
     				, '--') AS attRate
-        , CMP.fieldValue AS CAMPUS
+        , CMP.campusName AS CAMPUS
 
     FROM Students S
     INNER JOIN (SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId) RR
@@ -26,13 +26,8 @@ FROM (
     INNER JOIN Registrations R ON R.studentId = S.studentId
         AND R.registrationId = RR.maxReg
     INNER JOIN Programmes P ON P.programmeId = R.programmeId
-    LEFT JOIN ProfileFieldValues CMP ON CMP.userId = S.studentId
-        AND CMP.fieldName = 'SCAMPUS'
     INNER JOIN ProfileFieldValues SCH ON SCH.userId = S.studentId
         AND SCH.fieldName = 'PROGRAM_HOURS_SCHEDULED'
-    /* INNER JOIN ProfileFieldValues ASM ON ASM.fieldValue = CMP.fieldValue
-        AND ASM.userId = [?USERID]
-        AND ASM.fieldName = 'CAMPUS' */
     INNER JOIN ClassStudentReltn CSR ON CSR.registrationId = R.registrationId
     LEFT JOIN (SELECT studentId, classId, MIN(attendanceDate) AS firstDay
                 FROM Attendance
@@ -41,12 +36,17 @@ FROM (
                 GROUP BY studentId, classId) ATT
         ON ATT.studentId = S.studentId
         AND ATT.classId = CSR.classId
+    INNER JOIN Campuses CMP ON CMP.campusCode = S.studentCampus
 
     WHERE S.isActive = 1
     AND R.startDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND R.startDate <  CURDATE()
     AND CSR.isActive = 1
     AND CSR.status = 0
+    AND EXISTS (SELECT * FROM ProfileFieldValues
+                WHERE fieldName = 'CAMPUS'
+                AND fieldValue = CMP.campusName
+                AND userId = [?USERID])
     AND S.<ADMINID>
 
     GROUP BY S.studentId
