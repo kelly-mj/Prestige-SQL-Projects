@@ -8,6 +8,10 @@ SELECT IF('[?Campus]' <> ''
     , CT.typeName
     , CONCAT('<a target="_blank" href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', C.lastName, ', ', C.firstName, '</a>') AS Name
     , FORMAT(RD.fieldValue, '%m/%d/%Y') AS 'Recontact Date'
+    , CASE
+        WHEN LENGTH(CMT.fieldValue) <= 100 THEN CMT.fieldValue
+        WHEN LENGTH(CMT.fieldValue) BETWEEN 100 AND 200 THEN CONCAT(SUBSTRING(CMT.fieldValue, 1, 100), '</br>', SUBSTRING(CMT.fieldValue, 101, 200))
+        WHEN LENGTH(CMT.fieldValue) > 200 THEN CONCAT(SUBSTRING(CMT.fieldValue, 1, 100), '</br>', SUBSTRING(CMT.fieldValue, 101, 200), '</br>', SUBSTRING(CMT.fieldValue, 201, 300)) END AS 'Comments'
 
 FROM Contacts C
 INNER JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
@@ -15,6 +19,8 @@ LEFT JOIN ProfileFieldValues RD ON RD.userId = C.contactId
     AND RD.fieldName = 'RECONTACT_DATE'
 INNER JOIN ProfileFieldValues CMP ON CMP.userId = C.contactId
     AND CMP.fieldName = 'CAMPUS'
+LEFT JOIN ProfileFieldValues CMT ON CMT.userId = C.contactId
+    AND CMT.fieldName = 'NOTES'
 
 WHERE C.isActive = 1
 AND SUBSTRING(CT.typeName, 1, 1) IN ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
