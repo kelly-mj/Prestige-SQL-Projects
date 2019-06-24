@@ -7,7 +7,13 @@ SELECT IF('[?Campus]' <> ''
             , CMP.fieldValue) AS Campus
     , CT.typeName
     , CONCAT('<a target="_blank" href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', C.lastName, ', ', C.firstName, '</a>') AS Name
-    , FORMAT(RD.fieldValue, '%m/%d/%Y') AS 'Recontact Date'
+    , IF(RD.fieldValue < CURDATE(), DATE_FORMAT(RD.fieldValue, '<div style="background-color: #f09595;">%m/%d/%Y</div>'), DATE_FORMAT(RD.fieldValue, '%m/%d/%Y')) AS 'Recontact Date'
+    , CASE
+        WHEN DATEDIFF(CURDATE(), C.lastUpdateDtTm) > 60
+            THEN DATE_FORMAT(C.lastUpdateDtTm, '<strong><div style="color: red;">%m/%d/%Y</div></strong>')
+        WHEN C.lastUpdateDtTm < RD.fieldValue OR DATEDIFF(CURDATE(), C.lastUpdateDtTm) > 30
+            THEN DATE_FORMAT(C.lastUpdateDtTm, '<div style="color: red;">%m/%d/%Y</div>')
+        ELSE DATE_FORMAT(C.lastUpdateDtTm, '%m/%d/%Y') END AS 'Last Updated'
     , CASE
         WHEN LENGTH(CMT.fieldValue) <= 100 THEN CMT.fieldValue
         WHEN LENGTH(CMT.fieldValue) BETWEEN 100 AND 200 THEN CONCAT(SUBSTRING(CMT.fieldValue, 1, 100), '</br>', SUBSTRING(CMT.fieldValue, 101, 200))
