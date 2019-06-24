@@ -2,7 +2,9 @@
 -- Kelly MJ  |  6/17/2019
 -- Displays a list of leads. User input: lead type, lead campus
 
-SELECT (SELECT DISTINCT(campusName) FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', ''))) AS Campus
+SELECT IF('[?Campus]' <> ''
+            , (SELECT DISTINCT(campusName) FROM Campuses WHERE (INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) OR '[?Campus]' = campusCode))
+            , CMP.fieldValue) AS Campus
     , CT.typeName
     , CONCAT('<a target="_blank" href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', C.lastName, ', ', C.firstName, '</a>') AS Name
     , FORMAT(RD.fieldValue, '%m/%d/%Y') AS 'Recontact Date'
@@ -26,4 +28,4 @@ AND IF('[?Lead Type{Show All|Show All|1.|1. New Lead|2.|2. Attempted Contact|3.|
     , C.<ADMINID> /* dummy condition */
     , SUBSTRING(CT.typeName, 1, 2) = '[?Lead Type{Show All|Show All|1.|1. New Lead|2.|2. Attempted Contact|3.|3. Contacted/Working|4.|4. 1st Appointment/School Tour|5.|5. 2nd Appointment/Toured|6.|6. 3rd Appointment/Financial Aid|7.|7. Pending Enrollment|8.|8. Enrolled|9.|9. Nurturing|86|86. Lost/Not Interested}]')
 
-ORDER BY CT.typeName, C.lastName ASC
+ORDER BY CMP.fieldValue, CAST(SUBSTRING(typeName, 1, 2) AS SIGNED), C.lastName ASC
