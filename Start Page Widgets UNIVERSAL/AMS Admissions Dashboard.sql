@@ -1,4 +1,4 @@
--- [SHELL] ASM Dashboard
+-- [SHELL] ASM Admissions Dashboard
 -- Kelly MJ  |  06/17/2019
 -- Displays a list of the numbers of types of leads assigned to each admissions employee; links to Query Report to view detailed list of leads.
 
@@ -17,3 +17,4 @@ AND C.<ADMINID>
 AND C.isActive = 1
 
 GROUP BY C.contactTypeId
+ORDER BY CAST(SUBSTRING(CT.typeName, 1, 2) AS SIGNED)

@@ -1,4 +1,4 @@
--- [SHELL] ASM Recontact Dates
+-- [SHELL] AMS Recontact Dates
 -- Kelly MJ  |  6/12//2019
 -- Displays a list of active leads and their recontact dates. Leads have the same campus as the user (admissions employee) who is logged in.
 
