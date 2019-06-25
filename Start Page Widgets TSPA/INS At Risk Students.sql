@@ -75,6 +75,7 @@ FROM (
     AND S.<ADMINID>
 	AND A.isActive = 1
 	AND A.attendanceDate >= R.startDate
+	AND A.attendanceDate < CURDATE()
 	AND CS.teacherId = [USERID]
 
 	GROUP BY R.registrationId

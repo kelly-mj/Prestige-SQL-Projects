@@ -75,7 +75,7 @@ FROM (
     AND S.<ADMINID>
 	AND A.isActive = 1
 	AND A.attendanceDate >= R.startDate
-	AND S.studentCampus = (SELECT campusCode FROM Teachers WHERE teacherId = [?USERID])
+	AND A.attendanceDate < CURDATE()
 
 	GROUP BY R.registrationId
 ) t1
