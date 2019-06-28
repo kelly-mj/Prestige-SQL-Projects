@@ -1,16 +1,16 @@
--- Report: All withdrawn students in a specified date range
+-- [BENES] NACCAS 2. All Graduates per Program
 -- Kelly MJ  |  9/6/2018
 -- 9/21/2018 Kelly MJ: Reformatted first two rows; corrected column order; uses attendance table to determine LDA
--- 2019-04-10 Bern Rudisill BBR: Added ability to pick end date
+
 -- Report date range
 SELECT '<span style="font-size: 110%; padding: 3px 3px 3px 1px;"><strong>Date Range: </strong></span>' AS 'Student ID'
-	, CONCAT('<span style="font-size: 110%; padding: 3px;"><strong>', DATE_FORMAT('[?Start Date]', "%m/%d/%Y"), ' - ', DATE_FORMAT('[?End Date]', "%m/%d/%Y"), '</strong></span>') 'Student Name'
+	, CONCAT('<span style="font-size: 110%; padding: 3px;"><strong>', DATE_FORMAT('[?From Date]', "%m/%d/%Y"), ' - ', DATE_FORMAT(CURDATE(), "%m/%d/%Y"), '</strong></span>') 'Student Name'
 	, NULL AS 'Program Name'
     , NULL AS 'Contract Start Date'
     , NULL AS 'Withdrawal Date'
     , NULL AS 'Last Date of Attendance'
-    , NULL AS 'Actual Hours at<br>Time of Withdrawal'
-    , NULL AS '<div style="text-align: left">Scheduled<br>Program<br>Hours</div>'
+    , NULL AS 'Actual Hours at Time of Withdrawal'
+    , NULL AS 'Scheduled Hours'
 
 UNION	-- Count of students in list
 SELECT '<span style="font-size: 110%; padding: 3px 3px 3px 0px;"><strong>Student Count: </strong></span>'
@@ -20,17 +20,14 @@ FROM (
 	SELECT S.idNumber
 
 	FROM Students S
-
-	INNER JOIN Registrations R
-		ON R.studentId = S.studentId
-		AND R.graduationDate >= '[?Start Date]' AND R.graduationDate<='[?End Date]'
-
-	INNER JOIN Programmes P
-		ON P.programmeId = R.programmeId
+	INNER JOIN Registrations R ON R.studentId = S.studentId
+	INNER JOIN Programmes P ON P.programmeId = R.programmeId
 
 	WHERE S.isActive = 0
 			AND S.<ADMINID>
 			AND S.firstName NOT LIKE '%test%'
+			AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
+			AND R.graduationDate >= '[?From Date]'
 
 	GROUP BY S.idNumber
 	ORDER BY S.lastName ASC) t2
@@ -44,36 +41,25 @@ SELECT t1.* FROM (
 		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS Name
 		, P.programmeName
 		, DATE_FORMAT(R.startDate, "%m/%d/%Y") 'Contract Start Date'
-		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Witdrawal Date'
-		, COALESCE(DATE_FORMAT(DATE(CP.punchTime), "%m/%d/%Y"), DATE_FORMAT(MAX(A.attendanceDate), '%m/%d/%y'), 'N/A') 'LDA'
-		, COALESCE(ROUND(SUM(A.duration), 2), 'N/A') 'Actual Hours'
-		, CAST(P.minClockHours AS CHAR) 'Scheduled Hours'
+		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Graduation Date'
+		, (SELECT MAX(fieldValue) FROM ProfileFieldValues WHERE userId = S.studentId AND fieldName = 'PROGRAM_LDA' AND isActive = 1) 'LDA'
+		, COALESCE(ROUND(PFV.fieldValue, 2), 'N/A') 'Actual Hours'
+		, COALESCE((SELECT MAX(fieldValue) FROM ProfileFieldValues WHERE userId = S.studentId AND fieldName = 'PROGRAM_HOURS_SCHEDULED' AND isActive = 1), 0) 'Scheduled Hours'
 
 	FROM Students S
 
-	INNER JOIN Registrations R
-		ON R.studentId = S.studentId
-		AND R.graduationDate >= '[?Start Date]' and R.graduationDate<='[?End Date]'
-
-	INNER JOIN Programmes P
-		ON P.programmeId = R.programmeId
-
-	LEFT JOIN Attendance A
-	ON A.studentId = S.studentId
-    AND A.attendanceDate <= R.graduationDate
-    AND A.attendanceDate >= R.startDate
-    AND A.subjectId IN (SELECT GSR.subjectId FROM CourseGroups CG
-						INNER JOIN GroupSubjectReltn GSR ON GSR.courseGroupId = CG.courseGroupId
-                        WHERE GSR.isActive = 1 AND CG.isActive = 1 AND R.programmeId = CG.programmeId)
-	AND A.classId IN (SELECT CSR.classId FROM ClassStudentReltn CSR
-					  WHERE CSR.studentId = A.studentId AND CSR.isActive = 1)
-
-	LEFT JOIN (SELECT userId, MAX(punchTime) AS punchTime FROM ClockPunches GROUP BY userId) CP
+	INNER JOIN Registrations R ON R.studentId = S.studentId
+	INNER JOIN Programmes P ON P.programmeId = R.programmeId
+	LEFT JOIN ProfileFieldValues PFV ON PFV.userId = S.studentId
+		AND PFV.fieldName = 'PROGRAM_HOURS_ATTENDED'
+	LEFT JOIN (SELECT userId, MAX(punchTime) AS lastPunch FROM ClockPunches GROUP BY userId) CP
 		ON CP.userId = S.studentId
 
 	WHERE S.isActive = 0
 			AND S.<ADMINID>
+			AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
 			AND S.firstName NOT LIKE '%test%'
+			AND R.graduationDate >= '[?From Date]'
 
 	GROUP BY S.idNumber
 	ORDER BY S.lastName ASC) t1
