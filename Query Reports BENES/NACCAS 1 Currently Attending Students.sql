@@ -18,21 +18,16 @@ FROM (
 		, CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS Name
 
 	FROM Students S
-
-	INNER JOIN Registrations R
-		ON R.studentId = S.studentId
-		AND R.enrollmentSemesterId = 4000441
-
-	INNER JOIN Programmes P
-		ON P.programmeId = R.programmeId
-
-	INNER JOIN ProfileFieldValues PFV
-		ON PFV.userId = S.studentId
-	    AND PFV.fieldName = 'HOURS_ATTENDED'
+	INNER JOIN Registrations R ON R.studentId = S.studentId
+	INNER JOIN Programmes P ON P.programmeId = R.programmeId
+	LEFT JOIN ProfileFieldValues PFV ON PFV.userId = S.studentId
+	    AND PFV.fieldName = 'PROGRAM_HOURS_ATTENDED'
 
 	WHERE S.isActive IN (1, 12)
-		AND S.<ADMINID>
 		AND S.firstName NOT LIKE '%test%'
+		AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
+		AND R.enrollmentSemesterId = 4000441
+		AND S.<ADMINID>
 
 	ORDER BY S.lastName ASC
 ) t2
@@ -49,35 +44,21 @@ SELECT t1.* FROM (
 			END AS Name
 	    , P.programmeName 'Course Enrolled'              -- program name
 	    , DATE_FORMAT(R.startDate, "%m/%d/%Y") 'Contract Start Date'
-	    , CAST(P.minClockHours AS CHAR) 'Scheduled Hours'		-- scheduled hours
-	    , CONCAT('<div style="text-align: left">', COALESCE(ROUND(SUM(A.duration), 2), 0.00), '</div>') 'Actual Hours Completed'		-- actual hours completed
+	    , FORMAT((SELECT MAX(fieldValue) FROM ProfileFieldValues WHERE fieldName = 'PROGRAM_HOURS_SCHEDULED' AND userId = S.studentId AND isActive = 1), 2) 'Scheduled Hours'		-- scheduled hours
+	    , CONCAT('<div style="text-align: left">', COALESCE(ROUND(PFV.fieldValue, 2), 0.00), '</div>') 'Actual Hours Completed'		-- actual hours completed
 
 	FROM Students S
-
-	INNER JOIN Registrations R
-		ON R.studentId = S.studentId
-		AND R.enrollmentSemesterId = 4000441
-
-	INNER JOIN Programmes P
-		ON P.programmeId = R.programmeId
-
-	INNER JOIN ProfileFieldValues PFV
-		ON PFV.userId = S.studentId
-	    AND PFV.fieldName = 'HOURS_ATTENDED'
-
-	LEFT JOIN Attendance A
-	ON A.studentId = S.studentId
-    AND A.attendanceDate <= R.endDate
-    AND A.attendanceDate >= R.startDate
-    AND A.subjectId IN (SELECT GSR.subjectId FROM CourseGroups CG
-						INNER JOIN GroupSubjectReltn GSR ON GSR.courseGroupId = CG.courseGroupId
-                        WHERE GSR.isActive = 1 AND CG.isActive = 1 AND R.programmeId = CG.programmeId)
-	AND A.classId IN (SELECT CSR.classId FROM ClassStudentReltn CSR
-					  WHERE CSR.studentId = A.studentId AND CSR.isActive = 1)
+	INNER JOIN Registrations R ON R.studentId = S.studentId
+	INNER JOIN Programmes P ON P.programmeId = R.programmeId
+	LEFT JOIN ProfileFieldValues PFV ON PFV.userId = S.studentId
+	    AND PFV.fieldName = 'PROGRAM_HOURS_ATTENDED'
 
 	WHERE S.isActive IN (1, 12)
-		AND S.<ADMINID>
 		AND S.firstName NOT LIKE '%test%'
+		AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
+		AND R.enrollmentSemesterId = 4000441
+		AND S.<ADMINID>
+
 	GROUP BY S.studentId
 	ORDER BY S.lastName ASC
 ) t1
