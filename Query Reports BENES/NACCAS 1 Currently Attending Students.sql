@@ -18,6 +18,10 @@ FROM (
 		, CONCAT('<a href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS Name
 
 	FROM Students S
+	INNER JOIN (SELECT MAX(registrationId) AS maxReg, studentId FROM Registrations
+				WHERE isActive = 1
+				AND programmeId NOT IN (SELECT programmeId FROM Programmes WHERE programmeName LIKE '%Career%') GROUP BY studentId) RR
+		ON RR.studentId = S.studentId
 	INNER JOIN Registrations R ON R.studentId = S.studentId
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId
 	LEFT JOIN ProfileFieldValues PFV ON PFV.userId = S.studentId
@@ -26,7 +30,8 @@ FROM (
 	WHERE S.isActive IN (1, 12)
 		AND S.firstName NOT LIKE '%test%'
 		AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
-		AND R.enrollmentSemesterId = 4000441
+		AND RR.maxReg = R.registrationId
+		-- AND R.enrollmentSemesterId = 4000441
 		AND S.<ADMINID>
 
 	ORDER BY S.lastName ASC
@@ -48,6 +53,9 @@ SELECT t1.* FROM (
 	    , CONCAT('<div style="text-align: left">', COALESCE(ROUND(PFV.fieldValue, 2), 0.00), '</div>') 'Actual Hours Completed'		-- actual hours completed
 
 	FROM Students S
+	INNER JOIN (SELECT MAX(registrationId) AS maxReg, studentId FROM Registrations
+				WHERE isActive = 1
+				AND programmeId NOT IN (SELECT programmeId FROM Programmes WHERE programmeName LIKE '%Career%') GROUP BY studentId) RR
 	INNER JOIN Registrations R ON R.studentId = S.studentId
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId
 	LEFT JOIN ProfileFieldValues PFV ON PFV.userId = S.studentId
@@ -56,7 +64,8 @@ SELECT t1.* FROM (
 	WHERE S.isActive IN (1, 12)
 		AND S.firstName NOT LIKE '%test%'
 		AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
-		AND R.enrollmentSemesterId = 4000441
+		AND RR.maxReg = R.registrationId
+		-- AND R.enrollmentSemesterId = 4000441
 		AND S.<ADMINID>
 
 	GROUP BY S.studentId

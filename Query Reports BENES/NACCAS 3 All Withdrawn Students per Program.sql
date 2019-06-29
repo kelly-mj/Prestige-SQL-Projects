@@ -20,6 +20,9 @@ FROM (
 	SELECT S.idNumber
 
 	FROM Students S
+	INNER JOIN (SELECT MAX(registrationId) AS maxReg, studentId FROM Registrations
+				WHERE isActive = 1
+				AND programmeId NOT IN (SELECT programmeId FROM Programmes WHERE programmeName LIKE '%Career%') GROUP BY studentId) RR
 	INNER JOIN Registrations R ON R.studentId = S.studentId
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId
 
@@ -28,6 +31,7 @@ FROM (
 			AND S.firstName NOT LIKE '%test%'
 			AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
 			AND R.graduationDate >= '[?From Date]'
+			AND R.registrationId = RR.maxReg
 
 	GROUP BY S.idNumber
 	ORDER BY S.lastName ASC) t2
@@ -47,7 +51,9 @@ SELECT t1.* FROM (
 		, COALESCE((SELECT MAX(fieldValue) FROM ProfileFieldValues WHERE userId = S.studentId AND fieldName = 'PROGRAM_HOURS_SCHEDULED' AND isActive = 1), 0) 'Scheduled Hours'
 
 	FROM Students S
-
+	INNER JOIN (SELECT MAX(registrationId) AS maxReg, studentId FROM Registrations
+				WHERE isActive = 1
+				AND programmeId NOT IN (SELECT programmeId FROM Programmes WHERE programmeName LIKE '%Career%') GROUP BY studentId) RR
 	INNER JOIN Registrations R ON R.studentId = S.studentId
 	INNER JOIN Programmes P ON P.programmeId = R.programmeId
 	LEFT JOIN ProfileFieldValues PFV ON PFV.userId = S.studentId
@@ -60,6 +66,7 @@ SELECT t1.* FROM (
 			AND S.studentCampus = '[?Campus{34601|Brooksville|34652|New Port Richey|34606|Spring Hill}]'
 			AND S.firstName NOT LIKE '%test%'
 			AND R.graduationDate >= '[?From Date]'
+			AND R.registrationId = RR.maxReg
 
 	GROUP BY S.idNumber
 	ORDER BY S.lastName ASC) t1
