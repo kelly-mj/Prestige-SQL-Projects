@@ -1,4 +1,4 @@
--- [TSPA] ADM, COMP, FIN At Risk Students
+-- [TSPA] ADM, COMP, FIN, INS At Risk Students
 -- Kelly MJ  |  5/22/2019
 -- Displays students who have missed over 65% of their allowed missed hours (program-specific)
 
@@ -21,8 +21,12 @@ FROM (
 		, CONCAT(S.lastname, ', ', S.firstName) AS names
 		, P.programmeName AS Program
         , SUM(A.duration) AS hoursAtt
-        , SCH.fieldValue AS hoursSch
-        , SCH.fieldValue - SUM(A.duration) AS hoursMissed
+        , IF(LOCATE(DAYOFWEEK(CURDATE()), CS.dayNums) <> 0 AND CURTIME() < CS.endTime
+			, SCH.fieldValue - C.lessonDuration
+			, SCH.fieldValue) AS hoursSch
+		, IF(LOCATE(DAYOFWEEK(CURDATE()), CS.dayNums) <> 0 AND CURTIME() < CS.endTime
+			, SCH.fieldValue - C.lessonDuration - SUM(A.duration)
+			, SCH.fieldValue - SUM(A.duration)) AS hoursMissed
         , CS.maxStartTime
         , P.minClockHours
         , CASE
@@ -50,32 +54,36 @@ FROM (
 	INNER JOIN (SELECT studentId, MAX(registrationId) AS maxReg FROM Registrations WHERE isActive = 1 GROUP BY studentId) RR
 		ON RR.studentId = S.studentId
 
-	INNER JOIN Registrations R
-		ON R.studentId = S.studentId
+	INNER JOIN Registrations R ON R.studentId = S.studentId
 		AND R.registrationId = RR.maxReg
 
-	INNER JOIN Programmes P
-		ON P.programmeId = R.programmeId
+	INNER JOIN Programmes P ON P.programmeId = R.programmeId
 
 	LEFT JOIN ( SELECT studentId, classId
 				FROM ClassStudentReltn
                 WHERE isActive = 1 AND status =  0 ) CSR
 		ON CSR.studentId = S.studentId
 
-	LEFT JOIN (SELECT classId, MAX(startTime) AS maxStartTime FROM ClassSchedules GROUP BY classId) CS
+	LEFT JOIN Classes C ON C.classId = CSR.classId
+
+	LEFT JOIN (SELECT classId
+					, MAX(startTime) AS maxStartTime
+                    , CONCAT(SUBSTRING(MAX(endTime), 1, 2), ':', SUBSTRING(MAX(endTime), 3, 2), ':00') AS endTime
+                    , GROUP_CONCAT(dayNum SEPARATOR ' ') AS dayNums
+				FROM ClassSchedules
+                GROUP BY classId) CS
 		ON CS.classId = CSR.classId
 
 	LEFT JOIN Attendance A ON A.studentId = S.studentId
 
-	LEFT JOIN ProfileFieldValues SCH
-		ON SCH.userId = S.studentId
+	LEFT JOIN ProfileFieldValues SCH ON SCH.userId = S.studentId
 		AND SCH.fieldName = 'PROGRAM_HOURS_SCHEDULED'
 
 	WHERE S.isActive IN (1, 12)
-    AND S.<ADMINID>
-	AND A.isActive = 1
-	AND A.attendanceDate >= R.startDate
-	AND A.attendanceDate < CURDATE()
+    	AND S.<ADMINID>
+		AND A.isActive = 1
+		AND A.attendanceDate >= R.startDate
+		AND A.attendanceDate <= CURDATE()
 
 	GROUP BY R.registrationId
 ) t1
