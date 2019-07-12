@@ -7,6 +7,7 @@ SELECT '<span style="font-size: 110%; padding: 3px 3px 3px 1px;"><strong>Date Ra
 	, CONCAT('<span style="font-size: 110%; padding: 3px;"><strong>', DATE_FORMAT('[?From Date]', "%m/%d/%Y"), ' - ', DATE_FORMAT(CURDATE(), "%m/%d/%Y"), '</strong></span>') 'Student Name'
 	, NULL AS 'Program Name'
     , NULL AS 'Contract Start Date'
+	, NULL AS 'Contract Grad Date'
     , NULL AS 'Graduation Date'
     , NULL AS 'Last Date of Attendance'
     , NULL AS 'Actual Hours at Time of Graduation'
@@ -15,7 +16,7 @@ SELECT '<span style="font-size: 110%; padding: 3px 3px 3px 1px;"><strong>Date Ra
 UNION	-- Count of students in list
 SELECT '<span style="font-size: 110%; padding: 3px 3px 3px 0px;"><strong>Student Count: </strong></span>'
 	, CONCAT('<span style="font-size: 110%; padding: 3px;"><strong>', COUNT(t2.idNumber), '</strong></span>')
-	, NULL, NULL, NULL, NULL, NULL, NULL
+	, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 FROM (
 	SELECT S.idNumber
 
@@ -37,7 +38,7 @@ FROM (
 	ORDER BY S.lastName ASC) t2
 
 UNION	-- spacer
-SELECT NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+SELECT NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 
 UNION	-- student list
 SELECT t1.* FROM (
@@ -45,6 +46,7 @@ SELECT t1.* FROM (
 		, CONCAT('<a target="_blank" href="admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', UPPER(SUBSTRING(S.lastName, 1, 1)), LOWER(SUBSTRING(S.lastName, 2, 100)), ', ', UPPER(SUBSTRING(S.firstName, 1, 1)), LOWER(SUBSTRING(S.firstName, 2, 100)), '</a>') AS Name
 		, P.programmeName
 		, DATE_FORMAT(R.startDate, "%m/%d/%Y") 'Contract Start Date'
+		, DATE_FORMAT(R.endDate, "%m/%d/%Y") 'Contract Grad Date'
 		, DATE_FORMAT(R.graduationDate, "%m/%d/%Y") 'Graduation Date'
 		, (SELECT MAX(fieldValue) FROM ProfileFieldValues WHERE userId = S.studentId AND fieldName = 'PROGRAM_LDA' AND isActive = 1) 'LDA'
 		, COALESCE(ROUND(PFV.fieldValue, 2), 'N/A') 'Actual Hours'
