@@ -10,32 +10,23 @@ FROM (
 				WHERE C.isActive = 1
                 AND C.<ADMINID>
                 /* user inputs */
-                AND C.creationDtTm BETWEEN '[?From Date]' AND '[?To Date]'
+                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
                 AND IF('[?Campus]' <> ''
 						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
 						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
-		, (SELECT COUNT(DISTINCT t2.contactId) FROM
-			/* get contacts currently at 'Appointment' */
-			(SELECT DISTINCT C.contactId FROM Contacts C
-					INNER JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-					WHERE C.isActive = 1
-					AND C.<ADMINID>
-					AND CT.typeName = '3. Mailed Catalog'
-					/* user inputs */
-					AND C.lastUpdateDtTm BETWEEN '[?From Date]' AND '[?To Date]'
-					AND IF('[?Campus]' <> ''
-							, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-							, C.<ADMINID> /* dummy condition */ )
-			UNION /* get contacts who were at 'Appointment' in the indicated date range 0*/
-			SELECT DISTINCT USR.toUserId FROM UserStatusRecords USR
-					INNER JOIN ContactTypes CT ON CT.contactTypeId = USR.status
-					INNER JOIN Contacts C ON C.contactId = USR.toUserId
-					WHERE USR.isActive = 1
-					AND USR.<ADMINID>
-					AND CT.typeName = '3. Mailed Catalog'
-					/* user inputs */
-					AND USR.updateDtTm BETWEEN '[?From Date]' AND '[?To Date]'
-					AND IF('[?Campus]' <> ''
-							, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-							, C.<ADMINID> /* dummy condition */ ) ) AS t2) AS 'appointment'
+		, (SELECT COUNT(DISTINCT C.contactId) AS count
+		    FROM Contacts C
+		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+		                WHERE T.typeName = '3. Mailed Catalog'
+		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+		        ON USR.toUserId = C.contactId
+		    WHERE C.isActive = 1
+		    AND C.<ADMINID>
+		    AND ((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+		            OR USR.toUserId IS NOT NULL)
+		    AND IF('[?Campus]' <> ''
+		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
+		            , C.<ADMINID> /* dummy condition */ )) AS 'appointment'
 	) t1
