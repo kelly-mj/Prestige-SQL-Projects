@@ -11,12 +11,12 @@ SELECT CONCAT(CAST(t1.interview AS CHAR), ' : ', CAST(t2.application AS CHAR)) A
 			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '3. Mailed Catalog'
+						WHERE T.typeName = '6. Interviewed'
 						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
 					OR USR.include = 1)
 			AND IF('[?Campus]' <> ''
 					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
@@ -28,12 +28,12 @@ SELECT CONCAT(CAST(t1.interview AS CHAR), ' : ', CAST(t2.application AS CHAR)) A
 			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '2. Left Message'
+						WHERE T.typeName = '7. Applied'
 						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '2. Left Message' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
 					OR USR.include = 1)
 			AND IF('[?Campus]' <> ''
 					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
