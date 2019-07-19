@@ -1,42 +1,41 @@
--- [HWD] KPI - Admissions - Lead to Application
--- Kelly MJ  | 7/14/2019
--- 7/15/19 TODO: Correct '3. Mailed Catalog' to Hollywood's interview lead type
+-- [HWD] KPI - Admissions - Interview to Application
+-- Kelly MJ  |  7/19/2019
+-- 7/19/19 TODO: Change lead types to '6. Interviewed' and '7. Applied' for use in Hollywood/Cortiva sites
 
-SELECT CONCAT(CAST(t1.total AS CHAR), ' : ', CAST(t1.current+t1.past AS CHAR)) AS '# Leads : # Appts'
-	, CONCAT(FORMAT(100*(t1.current+t1.past)/t1.total, 2), ' %') AS 'L to A %'
+SELECT CONCAT(CAST(t1.interview AS CHAR), ' : ', CAST(t2.application AS CHAR)) AS '# Interviews : # Applications'
+	, CONCAT(FORMAT(COALESCE(100*(t2.application)/(t1.interview), 0), 2), ' %') AS 'I to APP %'
 
-FROM (
-	SELECT (SELECT COUNT(C.contactId) FROM Contacts C
-				WHERE C.isActive = 1
-                AND C.<ADMINID>
-                /* user inputs */
-                AND C.creationDtTm BETWEEN '[?To Date]' AND '[?From Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'total'
-		, (SELECT COUNT(C.contactId) FROM Contacts C
-				INNER JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-				WHERE C.isActive = 1
-				AND C.<ADMINID>
-				AND CT.typeName = '3. Mailed Catalog'
-				/* user inputs */
-				AND C.lastUpdateDtTm BETWEEN '[?To Date]' AND '[?From Date]'
-				AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'current'
-		, (SELECT COUNT(DISTINCT USR.toUserId) FROM UserStatusRecords USR
-				INNER JOIN ContactTypes CT ON CT.contactTypeId = USR.status
-				INNER JOIN Contacts C ON C.contactId = USR.toUserId
-				WHERE USR.isActive = 1
-				AND USR.<ADMINID>
-				AND CT.typeName = '3. Mailed Catalog'
-				AND NOT EXISTS (SELECT * FROM Contacts C
-								INNER JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-								WHERE C.contactId = USR.toUserId
-								AND CT.typeName = '3. Mailed Catalog')
-				/* user inputs */
-				AND USR.updateDtTm BETWEEN '[?To Date]' AND '[?From Date]'
-				AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ ) ) AS 'past'
+	FROM (
+		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS interview, 'join' as joinCode
+			FROM Contacts C
+			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
+						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+						WHERE T.typeName = '3. Mailed Catalog'
+						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+				ON USR.toUserId = C.contactId
+			WHERE C.isActive = 1
+			AND C.<ADMINID>
+			AND ((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+					OR USR.include = 1)
+			AND IF('[?Campus]' <> ''
+					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
+					, C.<ADMINID> /* dummy condition */ )
 	) t1
+	INNER JOIN (
+		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS application, 'join' as joinCode
+			FROM Contacts C
+			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
+						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+						WHERE T.typeName = '2. Left Message'
+						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+				ON USR.toUserId = C.contactId
+			WHERE C.isActive = 1
+			AND C.<ADMINID>
+			AND ((CT.typeName = '2. Left Message' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+					OR USR.include = 1)
+			AND IF('[?Campus]' <> ''
+					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
+					, C.<ADMINID> /* dummy condition */ )
+	) t2 ON t2.joinCode = t1.joinCode
