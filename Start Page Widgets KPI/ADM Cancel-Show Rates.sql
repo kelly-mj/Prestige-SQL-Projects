@@ -19,7 +19,7 @@ FROM (
         AND C.<ADMINID>
         AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
                 OR USR.toUserId IS NOT NULL)
-        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND isActive = 1) ) APP
+        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND isActive = 1) ) APP
 LEFT JOIN (
     SELECT 'join' as joinCode
         , COALESCE(COUNT(DISTINCT C.contactId), 0) AS num
@@ -34,7 +34,7 @@ LEFT JOIN (
         AND C.<ADMINID>
         AND ((CT.typeName = '86. Lost - Not Interested - Cancel' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
                 OR USR.toUserId IS NOT NULL)
-        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND isActive = 1) ) C
+        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND isActive = 1) ) C
     ON C.joinCode = APP.joinCode
 
 UNION
@@ -56,7 +56,7 @@ FROM (
         AND C.<ADMINID>
         AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
                 OR USR.toUserId IS NOT NULL)
-        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND isActive = 1) ) APP
+        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND isActive = 1) ) APP
 LEFT JOIN (
     SELECT 'join' as joinCode
         , COALESCE(COUNT(DISTINCT C.contactId), 0) AS num
@@ -71,5 +71,5 @@ LEFT JOIN (
         AND C.<ADMINID>
         AND ((CT.typeName = '9. Started Student' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
                 OR USR.toUserId IS NOT NULL)
-        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [?USERID] AND isActive = 1) ) S
+        AND C.campusCode IN (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID] AND isActive = 1) ) S
     ON S.joinCode = APP.joinCode
