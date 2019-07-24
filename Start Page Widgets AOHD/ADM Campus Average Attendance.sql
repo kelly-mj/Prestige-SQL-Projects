@@ -4,13 +4,16 @@
 
 SELECT CMP.campusName
     , FORMAT(SUM(t1.hoursAtt), 0) AS 'Total Hours Attended'
-    , FORMAT(SUM(SCH.hoursSch), 0) AS 'Total Hours Scheduled'
-    , CONCAT(FORMAT(100*SUM(t1.hoursAtt)/SUM(SCH.hoursSch), 2), '%') AS 'Attendance Percentage'
+    , FORMAT(SUM(SCH.hoursSch - t1.hoursToday), 0) AS 'Total Hours Scheduled'
+    , CONCAT(FORMAT(100*SUM(t1.hoursAtt)/SUM(SCH.hoursSch - t1.hoursToday), 2), '%') AS 'Attendance Percentage'
 
 FROM (
     SELECT SUM(A.duration) AS hoursAtt
         , S.studentId
         , S.studentCampus
+        , IF(CS.endTime IS NOT NULL AND CS.endTime > CURTIME()
+            , C.lessonDuration
+            , 0) AS hoursToday
 
     FROM Students S
     INNER JOIN (SELECT MAX(registrationId) maxReg, studentId FROM Registrations WHERE isActive = 1 GROUP BY studentId) RR
@@ -20,6 +23,12 @@ FROM (
     INNER JOIN Attendance A ON A.studentId = R.studentId
     INNER JOIN ClassStudentReltn CSR ON CSR.studentId = R.studentId
     INNER JOIN Classes C ON C.classId = CSR.classId
+    LEFT JOIN (SELECT classId
+                    , CONCAT(SUBSTRING(MAX(endTime), 1, 2), ':', SUBSTRING(MAX(endTime), 3, 2), ':00') AS endTime
+				FROM ClassSchedules
+                WHERE dayNum = DAYOFWEEK(CURDATE()) - 1
+                GROUP BY classId) CS
+		ON CS.classId = CSR.classId
 
     WHERE A.attendanceDate >= R.startDate
         AND A.isActive = 1
