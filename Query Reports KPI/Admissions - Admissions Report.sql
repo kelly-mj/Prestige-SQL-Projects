@@ -1,217 +1,168 @@
 -- [HWD] KPI - Admissions Report
--- Kelly MJ  |  7/19/2019
+-- Kelly MJ  |  7/29/2019
 
-SELECT 'Lead to Appointment' AS 'Report Type'
-    , CONCAT('<span style="display: inline-block; width: 46px; padding-right: 5px; text-align: right;">', CAST(t1.lead AS CHAR), '</span>:&nbsp;&nbsp;', CAST(t1.appointment AS CHAR)) AS 'Gross Numbers'
-	, CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(100*(t1.appointment)/t1.lead, 2), '%</span> L to A') AS 'Percentages'
+-- adaptions for testing on Benestest:
+   -- '5. Appointment Set' --> '3. Mailed Catalog'
+   -- '6. Interviewed'     --> '6. Nurturing'
+   -- '7. Applied'         --> '5. Working'
+   -- '8. Enrolled'        --> '2. Left Message'
 
-FROM (
-	SELECT (SELECT COUNT(C.contactId) FROM Contacts C
-				WHERE C.isActive = 1
-                AND C.<ADMINID>
-                /* user inputs */
-                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
-		, (SELECT COUNT(DISTINCT C.contactId) AS count
-		    FROM Contacts C
-		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
-		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-		                WHERE T.typeName = '3. Mailed Catalog'
-		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-		        ON USR.toUserId = C.contactId
-		    WHERE C.isActive = 1
-		    AND C.<ADMINID>
-		    AND ((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-		            OR USR.toUserId IS NOT NULL)
-		    AND IF('[?Campus]' <> ''
-		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-		            , C.<ADMINID> /* dummy condition */ )) AS 'appointment'
-	) t1
+SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
+    , t1.type AS 'Type'
+    , CONCAT('<span style="display: inline-block; width: 30px; padding-right: 5px; text-align: right;">', CAST(SUM(t1.l) AS CHAR), '</span>:&nbsp;&nbsp;', CAST(SUM(t1.r) AS CHAR)) AS 'Gross Numbers'
+    , CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(100*COALESCE((SUM(t1.r))/SUM(t1.l), 0), 0), '%</span>', t1.label) AS 'Percentages'
 
-UNION
+FROM Campuses CMP
+INNER JOIN (
+    /* Lead to Appointment */
+    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
+        , 'Lead to Appointment' AS type
+        , SUM(IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
+                    , 1, 0)) AS l
+        , SUM(IF((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR USR.toUserId IS NOT NULL
+                    , 1, 0)) AS r
+        , 'L to A' AS label
+        , 1 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '3. Mailed Catalog'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+        ON USR.toUserId = C.contactId
 
-(SELECT 'Appointment to Interview'
-    , CONCAT('<span style="display: inline-block; width: 46px; padding-right: 5px; text-align: right;">', CAST(t1.appointment AS CHAR), '</span>:&nbsp;&nbsp;', CAST(t2.interview AS CHAR))
-	, CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(COALESCE(100*(t2.interview)/(t1.appointment), 0), 2), '%</span> A to I')
+    WHERE C.isActive = 1
+    GROUP BY C.campusCode)
 
-	FROM (
-		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS appointment, 'join' as joinCode
-			FROM Contacts C
-			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
-						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '5. Appointment Set'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-				ON USR.toUserId = C.contactId
-			WHERE C.isActive = 1
-			AND C.<ADMINID>
-			AND ((CT.typeName = '5. Appointment Set' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
-	) t1
-	INNER JOIN (
-		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS interview, 'join' as joinCode
-			FROM Contacts C
-			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
-						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '6. Interviewed'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-				ON USR.toUserId = C.contactId
-			WHERE C.isActive = 1
-			AND C.<ADMINID>
-			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
-	) t2 ON t2.joinCode = t1.joinCode)
+    UNION /* Appointment to Interview */
+    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
+        , 'Appointment to Interview' AS type
+        , SUM(IF((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR L.toUserId IS NOT NULL
+                    , 1, 0)) AS l
+        , SUM(IF((CT.typeName = '6. Nurturing' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR R.toUserId IS NOT NULL
+                    , 1, 0)) AS r
+        , 'A to I' AS label
+        , 2 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '3. Mailed Catalog'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') L
+        ON L.toUserId = C.contactId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '6. Nurturing'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') R
+        ON R.toUserId = C.contactId
 
-UNION
+    WHERE C.isActive = 1
+    GROUP BY C.campusCode)
 
-(SELECT 'Interview to Application'
-    , CONCAT('<span style="display: inline-block; width: 46px; padding-right: 5px; text-align: right;">', CAST(t1.interview AS CHAR), '</span>:&nbsp;&nbsp;', CAST(t2.application AS CHAR))
-	, CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(COALESCE(100*(t2.application)/(t1.interview), 0), 2), '%</span> I to APP')
+    UNION /* Interview to Application */
+    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
+        , 'Appointment to Interview' AS type
+        , SUM(IF((CT.typeName = '6. Nurturing' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR L.toUserId IS NOT NULL, 1, 0)) AS l
+        , SUM(IF((CT.typeName = '5. Working' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR R.toUserId IS NOT NULL, 1, 0)) AS r
+        , 'I to APP' AS label
+        , 3 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '6. Nurturing'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') L
+        ON L.toUserId = C.contactId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '5. Working'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') R
+        ON R.toUserId = C.contactId
 
-	FROM (
-		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS interview, 'join' as joinCode
-			FROM Contacts C
-			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
-						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '6. Interviewed'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-				ON USR.toUserId = C.contactId
-			WHERE C.isActive = 1
-			AND C.<ADMINID>
-			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
-	) t1
-	INNER JOIN (
-		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS application, 'join' as joinCode
-			FROM Contacts C
-			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
-						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '7. Applied'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-				ON USR.toUserId = C.contactId
-			WHERE C.isActive = 1
-			AND C.<ADMINID>
-			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
-	) t2 ON t2.joinCode = t1.joinCode)
+    WHERE C.isActive = 1
+    GROUP BY C.campusCode)
 
-UNION
+    UNION /* Lead to Application */
+    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
+        , 'Lead to Application' AS type
+        , SUM(IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
+                    , 1
+                    , 0)) AS l
+        , SUM(IF((CT.typeName = '5. Working' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR USR.toUserId IS NOT NULL
+                    , 1
+                    , 0)) AS r
+        , 'L to APP' AS label
+        , 4 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '5. Working'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+        ON USR.toUserId = C.contactId
 
-(SELECT 'Lead to Application' AS 'Report Type'
-    , CONCAT('<span style="display: inline-block; width: 46px; padding-right: 5px; text-align: right;">', CAST(t1.lead AS CHAR), '</span>:&nbsp;&nbsp;', CAST(t1.application AS CHAR))
-	, CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(100*(t1.application)/t1.lead, 2), '%</span> L to APP')
+    WHERE C.isActive = 1
+    GROUP BY C.campusCode)
 
-FROM (
-	SELECT (SELECT COUNT(C.contactId) FROM Contacts C
-				WHERE C.isActive = 1
-                AND C.<ADMINID>
-                /* user inputs */
-                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
-		, (SELECT COUNT(DISTINCT C.contactId) AS count
-		    FROM Contacts C
-		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
-		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-		                WHERE T.typeName = '7. Applied'
-		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-		        ON USR.toUserId = C.contactId
-		    WHERE C.isActive = 1
-		    AND C.<ADMINID>
-		    AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-		            OR USR.toUserId IS NOT NULL)
-		    AND IF('[?Campus]' <> ''
-		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-		            , C.<ADMINID> /* dummy condition */ )) AS 'application') t1)
+    UNION /* Application to Enrollment */
+    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
+        , 'Appointment to Interview' AS type
+        , SUM(IF((CT.typeName = '5. Working' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR L.toUserId IS NOT NULL
+                    , 1
+                    , 0)) AS l
+        , SUM(IF((CT.typeName = '2. Left Message' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR R.toUserId IS NOT NULL
+                    , 1
+                    , 0)) AS r
+        , 'APP to E' AS label
+        , 5 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '5. Working'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') L
+        ON L.toUserId = C.contactId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '2. Left Message'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') R
+        ON R.toUserId = C.contactId
 
-UNION
+    WHERE C.isActive = 1
+    GROUP BY C.campusCode)
 
-(SELECT 'Application to Enrollment'
-    , CONCAT('<span style="display: inline-block; width: 46px; padding-right: 5px; text-align: right;">', CAST(t1.application AS CHAR), '</span>:&nbsp;&nbsp;', CAST(t2.enroll AS CHAR))
-	, CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(COALESCE(100*(t2.enroll)/(t1.application), 0), 2), '%</span> APP to E')
+    UNION /* Lead to Application */
+    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
+        , 'Lead to Application' AS type
+        , SUM(IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
+                    , 1, 0)) AS l
+        , SUM(IF((CT.typeName = '2. Left Message' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR USR.toUserId IS NOT NULL
+                    , 1, 0)) AS r
+        , 'L to E' AS label
+        , 6 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '2. Left Message'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+        ON USR.toUserId = C.contactId
 
-	FROM (
-		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS application, 'join' as joinCode
-			FROM Contacts C
-			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
-						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '7. Applied'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-				ON USR.toUserId = C.contactId
-			WHERE C.isActive = 1
-			AND C.<ADMINID>
-			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
-	) t1
-	INNER JOIN (
-		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS enroll, 'join' as joinCode
-			FROM Contacts C
-			LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
-						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-						WHERE T.typeName = '8. Enrolled'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-				ON USR.toUserId = C.contactId
-			WHERE C.isActive = 1
-			AND C.<ADMINID>
-			AND ((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
-	) t2 ON t2.joinCode = t1.joinCode)
+    WHERE C.isActive = 1
+    GROUP BY C.campusCode)
+) t1
+    ON t1.campusCode = CMP.campusCode
 
-UNION
+WHERE CMP.isActive = 1
+GROUP BY CMP.campusCode, t1.Ord
 
-(SELECT 'Lead to Enrollment' AS 'Report Type'
-    , CONCAT('<span style="display: inline-block; width: 46px; padding-right: 5px; text-align: right;">', CAST(t1.lead AS CHAR), '</span>:&nbsp;&nbsp;', CAST(t1.enroll AS CHAR))
-	, CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(100*(t1.enroll)/t1.lead, 2), '%</span> L to E')
-
-FROM (
-	SELECT (SELECT COUNT(C.contactId) FROM Contacts C
-				WHERE C.isActive = 1
-                AND C.<ADMINID>
-                /* user inputs */
-                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
-		, (SELECT COUNT(DISTINCT C.contactId) AS count
-		    FROM Contacts C
-		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
-		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
-		                WHERE T.typeName = '8. Enrolled'
-		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
-		        ON USR.toUserId = C.contactId
-		    WHERE C.isActive = 1
-		    AND C.<ADMINID>
-		    AND ((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
-		            OR USR.toUserId IS NOT NULL)
-		    AND IF('[?Campus]' <> ''
-		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-		            , C.<ADMINID> /* dummy condition */ )) AS 'enroll') t1)
+/* <ADMINID> */
