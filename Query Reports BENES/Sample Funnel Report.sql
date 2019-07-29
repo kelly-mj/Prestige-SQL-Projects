@@ -59,14 +59,25 @@ SELECT CMP.physicalState AS 'State'
 
 FROM Campuses CMP
 LEFT JOIN (
-	SELECT COUNT(CASE WHEN CT.typeName = '2. Left Message' THEN 1 END) AS leads
-		, COUNT(CASE WHEN CT.typeName = '5. Working' THEN 1 END) AS intr
-        , COUNT(CASE WHEN CT.typeName = '6. Nuturing' THEN 1 END) AS enr
+	SELECT COUNT(CASE WHEN DAYOFWEEK(C.creationDtTm = 2) THEN 1 END) AS leads
+		, COUNT(CASE WHEN DAYOFWEEK(C.lastUpdateDtTm = 2) AND CT.typeName = '' THEN 1 END) AS intr
+        , COUNT(CASE WHEN DAYOFWEEK(C.lastUpdateDtTm = 2) AND CT.typeName = '' THEN 1 END) AS enr
         , (SELECT MAX(fieldValue) FROM ProfileFieldValues WHERE userId = contactId AND fieldName = 'CAMPUS') AS campus
 	FROM Contacts C
     INNER JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
-    WHERE DAYOFWEEK(C.lastUpdateDtTm) = 2
-	AND C.lastUpdateDtTm >= DATE_SUB('[?Run Date]', INTERVAL (DAYOFWEEK('[?Run Date]') - 2) DAY)
+	LEFT JOIN (SELECT MAX(U.userStatusRecordId) wasSet
+		FROM UserStatusRecords U
+		WHERE U.updateDtTm >= DATE_SUB('[?Run Date]', INTERVAL (DAYOFWEEK('[?Run Date]') - 2) DAY) AND '[?Run Date]'
+	 	AND DAYOFWEEK(U.updateDtTm) = 2
+		AND U.status = (SELECT contactTypeId FROM ContactTypes WHERE typeName = '4. Appointment Scheduled'
+		GROUP BY U.toUserId)) INT
+	LEFT JOIN (SELECT MAX(U.userStatusRecordId) wasSet
+		FROM UserStatusRecords U
+		WHERE U.updateDtTm >= DATE_SUB('[?Run Date]', INTERVAL (DAYOFWEEK('[?Run Date]') - 2) DAY) AND '[?Run Date]'
+	 	AND DAYOFWEEK(U.updateDtTm) = 2
+		AND U.status = (SELECT contactTypeId FROM ContactTypes WHERE typeName = '6. Nuturing'
+		GROUP BY U.toUserId)) ENR
+    WHERE C.creationDtTm >= DATE_SUB('[?Run Date]', INTERVAL (DAYOFWEEK('[?Run Date]') - 2) DAY)
 	AND C.lastUpdateDtTm <= '[?Run Date]'
     GROUP BY campus) MON
     ON MON.campus = CMP.campusName
