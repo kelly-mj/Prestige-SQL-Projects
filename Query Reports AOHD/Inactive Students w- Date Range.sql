@@ -18,15 +18,29 @@ INNER JOIN Programmes P ON P.programmeId = R.programmeId
 INNER JOIN StatusSequences SS ON SS.statusId = S.isActive
 LEFT JOIN ( SELECT * FROM ProfileFieldValues
 			WHERE fieldName = 'SCHEDULE_' ) SCH ON SCH.userId = S.studentId
+LEFT JOIN ( SELECT studentId, MAX(LeavesOfAbsenceId) AS maxLOA FROM LeavesOfAbsence
+			WHERE (returnDate BETWEEN '[?From Date]' AND '[?To Date]'
+					OR leaveDate BETWEEN '[?From Date]' AND '[?To Date]'
+					OR (returnDate <= '[?From Date]' AND leaveDate >= '[?To Date]'))
+			GROUP BY studentId ) LOA ON LOA.studentId = S.studentId
 
-WHERE R.graduationDate BETWEEN '[?From Date]' AND '[?To Date]'
+WHERE CASE '[?Student type{1|Active|3|Graduated|0|Inactive/Past Student/Withdrawn|17|Inactive/Past Student/Dropped|12|LOA}]'
+		WHEN 1 THEN
+			(R.startDate <= '[?To Date]' AND (R.graduationDate IS NULL OR R.graduationDate > '[?To Date]'))
+		WHEN 12 THEN
+			((R.startDate <= '[?To Date]' AND (R.graduationDate IS NULL OR R.graduationDate > '[?To Date]'))
+			  AND LOA.maxLOA > 1)
+		ELSE
+			(R.graduationDate BETWEEN '[?From Date]' AND '[?To Date]'
+				AND S.isActive = '[?Student type{1|Active|3|Graduated|0|Inactive/Past Student/Withdrawn|17|Inactive/Past Student/Dropped|12|LOA}]')
+		END
 AND S.<ADMINID>
 -- user input filters
 AND IF('[?Campus]' <> ''
 		, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = S.studentCampus)
 			OR S.studentCampus = '[?Campus]')
 		, S.<ADMINID> /* dummy condition */ )
-AND S.isActive = '[?Student type{3|Graduated|0|Inactive/Past Student/Withdrawn|17|Inactive/Past Student/Dropped}]'
+
 
 GROUP BY R.registrationId
 ORDER BY R.graduationDate ASC, S.lastName
