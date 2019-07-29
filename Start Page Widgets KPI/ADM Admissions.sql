@@ -1,4 +1,4 @@
--- [HWD] KPI - Admissions Widget
+-- [HWD] KPI - ADM Admissions
 -- Kelly MJ  |  7/19/2019
 
 SELECT 'Lead to Appointment' AS 'Report Type'
@@ -10,25 +10,21 @@ FROM (
 				WHERE C.isActive = 1
                 AND C.<ADMINID>
                 /* user inputs */
-                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
+                AND DATE(C.creationDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.creationDtTm) <= CURDATE()
+				AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])) AS 'lead'
 		, (SELECT COUNT(DISTINCT C.contactId) AS count
 		    FROM Contacts C
 		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
 		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
 		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 		                WHERE T.typeName = '3. Mailed Catalog'
-		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+		                AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 		        ON USR.toUserId = C.contactId
 		    WHERE C.isActive = 1
 		    AND C.<ADMINID>
-		    AND ((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+		    AND ((CT.typeName = '3. Mailed Catalog' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 		            OR USR.toUserId IS NOT NULL)
-		    AND IF('[?Campus]' <> ''
-		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-		            , C.<ADMINID> /* dummy condition */ )) AS 'appointment'
+		    AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])) AS 'appointment'
 	) t1
 
 UNION
@@ -44,15 +40,13 @@ UNION
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 						WHERE T.typeName = '5. Appointment Set'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+						AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '5. Appointment Set' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '5. Appointment Set' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
+			AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
 	) t1
 	INNER JOIN (
 		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS interview, 'join' as joinCode
@@ -61,15 +55,13 @@ UNION
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 						WHERE T.typeName = '6. Interviewed'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+						AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
+			AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
 	) t2 ON t2.joinCode = t1.joinCode)
 
 UNION
@@ -85,15 +77,13 @@ UNION
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 						WHERE T.typeName = '6. Interviewed'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+						AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
+			AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
 	) t1
 	INNER JOIN (
 		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS application, 'join' as joinCode
@@ -102,15 +92,13 @@ UNION
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 						WHERE T.typeName = '7. Applied'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+						AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
+		    AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
 	) t2 ON t2.joinCode = t1.joinCode)
 
 UNION
@@ -124,25 +112,21 @@ FROM (
 				WHERE C.isActive = 1
                 AND C.<ADMINID>
                 /* user inputs */
-                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
+                AND DATE(C.creationDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.creationDtTm) <= CURDATE()
+				AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])) AS 'lead'
 		, (SELECT COUNT(DISTINCT C.contactId) AS count
 		    FROM Contacts C
 		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
 		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
 		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 		                WHERE T.typeName = '7. Applied'
-		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+		                AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 		        ON USR.toUserId = C.contactId
 		    WHERE C.isActive = 1
 		    AND C.<ADMINID>
-		    AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+		    AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 		            OR USR.toUserId IS NOT NULL)
-		    AND IF('[?Campus]' <> ''
-		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-		            , C.<ADMINID> /* dummy condition */ )) AS 'application') t1)
+		    AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])) AS 'application') t1)
 
 UNION
 
@@ -157,15 +141,13 @@ UNION
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 						WHERE T.typeName = '7. Applied'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+						AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
+			AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
 	) t1
 	INNER JOIN (
 		SELECT COALESCE(COUNT(DISTINCT C.contactId), 0) AS enroll, 'join' as joinCode
@@ -174,15 +156,13 @@ UNION
 			LEFT JOIN (SELECT U.toUserId, 1 AS 'include' FROM UserStatusRecords U
 						INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 						WHERE T.typeName = '8. Enrolled'
-						AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+						AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 				ON USR.toUserId = C.contactId
 			WHERE C.isActive = 1
 			AND C.<ADMINID>
-			AND ((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+			AND ((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 					OR USR.include = 1)
-			AND IF('[?Campus]' <> ''
-					, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-					, C.<ADMINID> /* dummy condition */ )
+			AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
 	) t2 ON t2.joinCode = t1.joinCode)
 
 UNION
@@ -196,22 +176,19 @@ FROM (
 				WHERE C.isActive = 1
                 AND C.<ADMINID>
                 /* user inputs */
-                AND DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]'
-                AND IF('[?Campus]' <> ''
-						, ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-						, C.<ADMINID> /* dummy condition */ )) AS 'lead'
+                AND DATE(C.creationDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.creationDtTm) <= CURDATE()
+				AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])) AS 'lead'
 		, (SELECT COUNT(DISTINCT C.contactId) AS count
 		    FROM Contacts C
 		    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
 		    LEFT JOIN (SELECT U.toUserId FROM UserStatusRecords U
 		                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
 		                WHERE T.typeName = '8. Enrolled'
-		                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+		                AND DATE(U.updateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(U.updateDtTm) <= CURDATE()) USR
 		        ON USR.toUserId = C.contactId
 		    WHERE C.isActive = 1
 		    AND C.<ADMINID>
-		    AND ((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+		    AND ((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= DATE_SUB(CURDATE(), INTERVAL 2 WEEK) AND DATE(C.lastUpdateDtTm) <= CURDATE())
 		            OR USR.toUserId IS NOT NULL)
-		    AND IF('[?Campus]' <> ''
-		            , ( EXISTS (SELECT * FROM Campuses WHERE INSTR(REPLACE(LOWER(campusName), ' ', ''), REPLACE(LOWER('[?Campus]'), ' ', '')) AND campusCode = C.campusCode) OR C.campusCode = '[?Campus]')
-		            , C.<ADMINID> /* dummy condition */ )) AS 'enroll') t1)
+		    AND C.campusCode = (SELECT campusCode FROM SubAdmins WHERE subAdminId = [USERID])
+        ) AS 'enroll') t1)
