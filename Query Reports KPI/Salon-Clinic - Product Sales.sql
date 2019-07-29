@@ -21,7 +21,7 @@ LEFT JOIN (SELECT * FROM ProductCampusReltn
 	AND PCR.campusId = CMP.campusCode
 LEFT JOIN (SELECT campusCode
 				, productCode
-				, COALESCE(COUNT(productInventoryTransactionId), 0) as count
+				, COALESCE(SUM(quantity), 0) as count
 			FROM ProductInventoryTransactions
 			WHERE notes = 'product sold'
 				AND DATE(transactionDtTm) >= IF('[?From Date]' = '', DATE_FORMAT(CURDATE(), '%Y-%m-01'), '[?From Date]')
