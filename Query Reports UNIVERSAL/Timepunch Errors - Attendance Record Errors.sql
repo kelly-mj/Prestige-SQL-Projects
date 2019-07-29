@@ -19,7 +19,7 @@ INNER JOIN Registrations R ON R.studentId = S.studentId
 	AND R.registrationId = RR.maxReg
 
 INNER JOIN Attendance A ON A.studentId = S.studentId
-	AND ( (A.present <> 1 AND A.attendanceClockPunch > "1") OR (A.present = 1 AND A.duration = 0) )
+	AND ( (A.present = 1 AND A.duration = 0) )
 
 INNER JOIN ClassStudentReltn CSR ON CSR.studentId = S.studentId
 	AND CSR.classId = A.classId
