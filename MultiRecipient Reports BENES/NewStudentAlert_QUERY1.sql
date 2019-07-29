@@ -1,3 +1,6 @@
+-- New Student Alert: Query 1
+-- Kelly MJ
+
 SELECT T.teacherId AS '[RECIPIENT_ID]'
     , T.email AS '[RECIPIENT_EMAIL]'
 

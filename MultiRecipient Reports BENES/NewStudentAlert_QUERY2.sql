@@ -1,3 +1,6 @@
+-- New Student Alert: Query 2
+-- Kelly MJ
+
 SELECT DATE_FORMAT(R.startDate, '%m/%d/%Y') AS 'Start Date'
     , C.className AS 'Class'
     , CONCAT('<a target="_blank" href="https://benes.orbund.com/einstein-freshair/admin_view_student.jsp?studentid=', CAST(S.studentId AS CHAR), '">', S.lastName, ', ', S.firstName, '</a>') AS 'Student'
