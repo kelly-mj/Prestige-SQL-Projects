@@ -9,7 +9,9 @@
 
 SELECT t1.type AS 'Type'
     , CONCAT('<span style="display: inline-block; width: 30px; padding-right: 5px; text-align: right;">', CAST(SUM(t1.l) AS CHAR), '</span>:&nbsp;&nbsp;', CAST(SUM(t1.r) AS CHAR)) AS 'Gross Numbers'
-    , CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(100*COALESCE((SUM(t1.r))/SUM(t1.l), 0), 0), '%</span>', t1.label) AS 'Percentages'
+    , IF(SUM(t1.r)/SUM(t1.l) >= t1.threshold
+            , CONCAT('<span style="display: inline-block; width: 45px;">', FORMAT(100*COALESCE((SUM(t1.r))/SUM(t1.l), 0), 0), '%</span>', t1.label)
+            , CONCAT('<span style="display: inline-block; width: 45px; color: red;">', FORMAT(100*COALESCE((SUM(t1.r))/SUM(t1.l), 0), 0), '%</span><span style="color: red;">', t1.label, '</span>')) AS 'Percentages'
 
 FROM Campuses CMP
 INNER JOIN (
@@ -18,6 +20,7 @@ INNER JOIN (
         , null AS l
         , null AS r
         , null AS label
+        , null AS threshold
         , 0 AS Ord
     FROM Campuses WHERE isActive = 1)
 
@@ -29,6 +32,7 @@ INNER JOIN (
                 OR USR.toUserId IS NOT NULL
                     , 1, 0)) AS r
         , 'L to A' AS label
+        , 0 AS threshold
         , 1 AS Ord
     FROM Contacts C
     LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
@@ -52,6 +56,7 @@ INNER JOIN (
                 OR R.toUserId IS NOT NULL
                     , 1, 0)) AS r
         , 'A to I' AS label
+        , 0 AS threshold
         , 2 AS Ord
     FROM Contacts C
     LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
@@ -78,6 +83,7 @@ INNER JOIN (
         , SUM(IF((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR R.toUserId IS NOT NULL, 1, 0)) AS r
         , 'I to APP' AS label
+        , .6 AS threshold
         , 3 AS Ord
     FROM Contacts C
     LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
@@ -104,6 +110,7 @@ INNER JOIN (
                 OR USR.toUserId IS NOT NULL
                     , 1, 0)) AS r
         , 'L to APP' AS label
+        , 0 AS threshold
         , 4 AS Ord
     FROM Contacts C
     LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
@@ -127,6 +134,7 @@ INNER JOIN (
                 OR R.toUserId IS NOT NULL
                     , 1, 0)) AS r
         , 'APP to E' AS label
+        , .8 AS threshold
         , 5 AS Ord
     FROM Contacts C
     LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
@@ -153,6 +161,7 @@ INNER JOIN (
                 OR USR.toUserId IS NOT NULL
                     , 1, 0)) AS r
         , 'L to E' AS label
+        , .22 AS threshold
         , 6 AS Ord
     FROM Contacts C
     LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
