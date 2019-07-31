@@ -11,7 +11,7 @@ FROM (
     (SELECT '<strong>Total Eligible vs. Testing</strong>' AS type
         , IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
         , COUNT(DISTINCT R.studentId) AS l
-        , SUM(IF(CP.satForAllPartsOfExam = 1, 1, 0)) AS r
+        , COUNT(DISTINCT IF(CP.satForAllPartsOfExam = 1, R.studentId, NULL)) AS r
         , 1 AS Ord
 
     FROM (
@@ -29,11 +29,11 @@ FROM (
     /* <ADMINID> */
 
     UNION  /* Total Testing vs. Passing */
-    (SELECT '&nbsp;&nbsp;&nbsp;&nbsp;Total Testing vs. Passing'
+    (SELECT '<strong>Total Testing vs. Passing<strong>'
         , IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
-        , SUM(IF(CP.satForAllPartsOfExam = 1, 1, 0)) AS l
-        , SUM(IF(CP.passedExam = 1, 1, 0)) AS r
-        , 2 AS Ord
+        , COUNT(DISTINCT IF(CP.satForAllPartsOfExam = 1, R.studentId, NULL)) AS l
+        , COUNT(DISTINCT IF(CP.passedExam = 1, R.studentId, NULL)) AS r
+        , 3 AS Ord
 
     FROM (
         SELECT MAX(registrationId) AS maxReg
@@ -48,12 +48,12 @@ FROM (
     WHERE R.regStatus = 3
     GROUP BY CMP.campusCode)
 
-    UNION /* Cosmo Eligible vs. Testing */
-    (SELECT '&nbsp;&nbsp;&nbsp;&nbsp;Cosmo Eligible vs. Testing' AS type
+    UNION /* Individual Program Eligible vs. Testing */
+    (SELECT CONCAT('&nbsp;&nbsp;&nbsp;&nbsp;', P.programmeName, ' Eligible vs. Testing') AS type
         , IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
         , COUNT(DISTINCT R.studentId) AS l
-        , SUM(IF(CP.satForAllPartsOfExam = 1, 1, 0)) AS r
-        , 3 AS Ord
+        , COUNT(DISTINCT IF(CP.satForAllPartsOfExam = 1, R.studentId, NULL)) AS r
+        , 2 AS Ord
 
     FROM (
         SELECT MAX(registrationId) AS maxReg
@@ -67,14 +67,13 @@ FROM (
     LEFT JOIN Campuses CMP ON CMP.campusCode = R.studentCampus
 
     WHERE R.regStatus = 3
-      AND P.programmeName = 'Cosmetology'
     GROUP BY CMP.campusCode)
 
-    UNION  /* Cosmo Testing vs. Passing */
-    (SELECT '&nbsp;&nbsp;&nbsp;&nbsp;Cosmo Testing vs. Passing'
+    UNION  /* Individual Program Testing vs. Passing */
+    (SELECT CONCAT('&nbsp;&nbsp;&nbsp;&nbsp;', P.programmeName, ' Testing vs. Passing') AS type
         , IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
-        , SUM(IF(CP.satForAllPartsOfExam = 1, 1, 0)) AS l
-        , SUM(IF(CP.passedExam = 1, 1, 0)) AS r
+        , COUNT(DISTINCT IF(CP.satForAllPartsOfExam = 1, R.studentId, NULL)) AS l
+        , COUNT(DISTINCT IF(CP.passedExam = 1, R.studentId, NULL)) AS r
         , 4 AS Ord
 
     FROM (
@@ -90,50 +89,6 @@ FROM (
 
     WHERE R.regStatus = 3
       AND P.programmeName = 'Cosmetology'
-    GROUP BY CMP.campusCode)
-
-    UNION /* Barber Eligible vs. Testing */
-    (SELECT '&nbsp;&nbsp;&nbsp;&nbsp;Barber Eligible vs. Testing' AS type
-        , IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
-        , COUNT(DISTINCT R.studentId) AS l
-        , SUM(IF(CP.satForAllPartsOfExam = 1, 1, 0)) AS r
-        , 5 AS Ord
-
-    FROM (
-        SELECT MAX(registrationId) AS maxReg
-        FROM Registrations
-        WHERE isActive = 1
-          AND graduationDate BETWEEN '[?From Date]' AND '[?To Date]'
-        GROUP BY studentId) RR
-    INNER JOIN Registrations R ON R.registrationId = RR.maxReg
-    INNER JOIN Programmes P ON P.programmeId = R.programmeId
-    LEFT JOIN CareerPlacements CP ON CP.registrationId = RR.maxReg
-    LEFT JOIN Campuses CMP ON CMP.campusCode = R.studentCampus
-
-    WHERE R.regStatus = 3
-      AND P.programmeName LIKE '%Barber%'
-    GROUP BY CMP.campusCode)
-
-    UNION  /* Barber Testing vs. Passing */
-    (SELECT '&nbsp;&nbsp;&nbsp;&nbsp;Barber Testing vs. Passing'
-        , IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', CMP.campusName, 'All Campuses') AS Campus
-        , SUM(IF(CP.satForAllPartsOfExam = 1, 1, 0)) AS l
-        , SUM(IF(CP.passedExam = 1, 1, 0)) AS r
-        , 6 AS Ord
-
-    FROM (
-        SELECT MAX(registrationId) AS maxReg
-        FROM Registrations
-        WHERE isActive = 1
-          AND graduationDate BETWEEN '[?From Date]' AND '[?To Date]'
-        GROUP BY studentId) RR
-    INNER JOIN Registrations R ON R.registrationId = RR.maxReg
-    INNER JOIN Programmes P ON P.programmeId = R.programmeId
-    LEFT JOIN CareerPlacements CP ON CP.registrationId = RR.maxReg
-    LEFT JOIN Campuses CMP ON CMP.campusCode = R.studentCampus
-
-    WHERE R.regStatus = 3
-      AND P.programmeName LIKE '%Barber%'
     GROUP BY CMP.campusCode)
 ) t1
 
