@@ -15,6 +15,10 @@ SELECT DISTINCT
   DATE_FORMAT(REG.startDate, '%m/%d/%Y') AS startDate,
   'C' AS 'EducationDeliveryMethod',
   IF(REG.enrollmentType=1,'FT','PT') AS 'Current Enrollment Status',
+  NULL AS 'Pay Period Start Date',
+  NULL AS 'Pay Period End Date',
+  NULL AS 'Current Loan Period - Start Date',
+  NULL AS 'Current Loan Period - End Date',
  -- StatusSequences.statusName,
 --  'TBD' AS 'Current Payment Period start date',
 --  'TBD' AS 'Current Payment Period- End Date',
@@ -64,4 +68,5 @@ OR REG.graduationDate = ''
 OR REG.graduationDate IS NULL)
 AND STD.isActive = 1
 AND STD.<ADMINID>
+
 ORDER BY 'OPEID', STD.lastName, STD.firstName
