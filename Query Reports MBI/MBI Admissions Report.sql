@@ -9,8 +9,7 @@ SELECT t1.type AS 'Type'
 
 FROM (
     /* Lead to Tour */
-    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
-        , 'Lead to Tour' AS type
+    (SELECT 'Lead to Tour' AS type
         , COUNT(DISTINCT IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]', C.contactId, NULL)) AS l
         , COUNT(DISTINCT IF((CT.typeName = '3. Completed Tour' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR USR.toUserId IS NOT NULL
@@ -31,8 +30,7 @@ FROM (
     )
 
     UNION /* Tour to Interview */
-    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
-        , 'Tour to Interview' AS type
+    (SELECT 'Tour to Interview' AS type
         , COUNT(DISTINCT IF((CT.typeName = '3. Completed Tour' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR L.toUserId IS NOT NULL
                     , C.contactId, NULL)) AS l
@@ -60,8 +58,7 @@ FROM (
     )
 
     UNION /* Interview to Application */
-    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
-        , 'Interview to Application' AS type
+    (SELECT 'Interview to Application' AS type
         , SUM(IF((CT.typeName = '6. Interviewed' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR L.toUserId IS NOT NULL, 1, 0)) AS l
         , SUM(IF((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
@@ -87,8 +84,7 @@ FROM (
     )
 
     UNION /* Lead to Application */
-    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
-        , 'Lead to Application' AS type
+    (SELECT 'Lead to Application' AS type
         , COUNT(DISTINCT IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]', C.contactId, NULL)) AS l
         , SUM(IF((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR USR.toUserId IS NOT NULL
@@ -109,8 +105,7 @@ FROM (
     )
 
     UNION /* Application to Enrollment */
-    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
-        , 'Application to Enrollment' AS type
+    (SELECT 'Application to Enrollment' AS type
         , SUM(IF((CT.typeName = '7. Applied' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR L.toUserId IS NOT NULL
                     , 1, 0)) AS l
@@ -138,8 +133,7 @@ FROM (
     )
 
     UNION /* Lead to Enrollment */
-    (SELECT IF('[?Aggregate?{No|No|Yes|Yes}]' = 'No', C.campusCode, (SELECT MAX(campusCode) FROM Campuses WHERE isActive = 1)) AS campusCode
-        , 'Lead to Enrollment' AS type
+    (SELECT 'Lead to Enrollment' AS type
         , COUNT(DISTINCT IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]', C.contactId, NULL)) AS l
         , SUM(IF((CT.typeName = '8. Enrolled' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
                 OR USR.toUserId IS NOT NULL
