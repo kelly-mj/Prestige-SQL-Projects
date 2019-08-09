@@ -3,7 +3,7 @@
 
 SELECT IFNULL(CMP.campusName, '<div style="">No campus</div>') AS Campus
 	, CT.typeName AS Status
-	, CONCAT('<a href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', CAST(C.lastName AS CHAR), ', ', CAST(C.firstName AS CHAR), '</a>') AS Name
+	, CONCAT('<a target="_blank" href="admin_view_contact.jsp?contactid=', CAST(C.contactId AS CHAR), '">', CAST(C.lastName AS CHAR), ', ', CAST(C.firstName AS CHAR), '</a>') AS Name
 	, DATE_FORMAT(C.creationDtTm, '%m-%d-%y') AS 'Date Added'
 	, DATE_FORMAT(C.lastUpdateDtTm, '%m-%d %h:%i') AS 'Last Update'
 
