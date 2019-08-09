@@ -45,10 +45,10 @@ FROM (
       #AND S.<ADMINID>
 ) t1
 
-WHERE CASE '[?Show{All (No Filters)|All (No Filters)|No Registration Record|No Registration Record|Non-Graduate Registration Record|Non-Graduate Registration Record|Active Students with Graduated Record|Active Students with Graduated Record|Correct Records|Correct Records}]'
+WHERE CASE '[?Show{All (No Filters)|All (No Filters)|No Registration Record|No Registration Record|Non-Graduate Registration Record|Non-Graduate Registration Record|Graduate Registration Record|Graduate Registration Record|Active Students with Graduated Record|Active Students with Graduated Record}]'
     WHEN 'No Registration Record' THEN t1.registrationId IS NULL
     WHEN 'Non-Graduate Registration Record' THEN t1.regStatus <> 3
-    WHEN 'Correct Records' THEN t1.regStatus = 3
+    WHEN 'Graduate Registration Record' THEN t1.regStatus = 3
     WHEN 'Active Students with Graduated Record' THEN t1.isActive <> 3
     ELSE t1.isActive = 3
     END
