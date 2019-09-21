@@ -38,7 +38,7 @@ WHEN "14" THEN IFNULL(CP.otherWaiverReason, 'Other')
 END) 'SPECIAL CIRCUMSTANCE NON-PLACEMENT (#)'
 ,IFNULL(CP.companyName, '') 'NAME OF EMPLOYER'
 ,CONVERT(CONCAT(CP.companyAddress, " ", CP.companyCity, " ", CP.companyState, " ", CP.companyZip, " ", CP.companyCountry), CHAR CHARACTER SET utf8) 'FULL ADDRESS OF EMPLOYER'
-,IFNULL(CP.salaryAmount, '0') 'TELEPHONE NUMBER OF EMPLOYER'
+,IFNULL(P6.fieldValue, '') 'TELEPHONE NUMBER OF EMPLOYER'
 ,IFNULL(CP.salaryAmount, '0') 'ANNUAL SALARY OR HOURLY WAGE'
 
 FROM Students S
@@ -50,6 +50,7 @@ LEFT JOIN ProfileFieldValues P4 ON P4.userId = S.studentId AND P4.userType = 1 A
 LEFT JOIN ProfileFieldValues P5 ON P5.userId = S.studentId AND P5.userType = 1 AND P5.isActive = 1 AND P5.fieldValue<>'' AND P5.<ADMINID> AND P5.fieldName ='SCW'
 
 LEFT JOIN CareerPlacements CP ON (CP.studentId = S.studentId AND CP.registrationId = R.registrationId AND CP.isActive = 1 AND CP.<ADMINID>)
+LEFT JOIN ProfileFieldValues P6 ON P6.userId = CP.careerPlacementId AND P6.fieldName = 'EMPLOYER_PHONE'
 
 WHERE R.isActive = 1
 AND ((R.graduationDate IS NULL OR R.graduationDate  BETWEEN '[?From Date]' AND '[?To Date]')

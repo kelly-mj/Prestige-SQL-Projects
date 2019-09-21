@@ -111,6 +111,28 @@ FROM (
     AND SUBSTRING(CT.typeName, 1, 1) IN ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     )
 
+    /* Lead to Enrolled */
+    UNION
+    (SELECT 'Lead to Enrolled' AS type
+        , COUNT(DISTINCT IF(DATE(C.creationDtTm) >= '[?From Date]' AND DATE(C.creationDtTm) <= '[?To Date]', C.contactId, NULL)) AS l
+        , COUNT(DISTINCT IF((CT.typeName = '6. Enrolled Student' AND DATE(C.lastUpdateDtTm) >= '[?From Date]' AND DATE(C.lastUpdateDtTm) <= '[?To Date]')
+                OR USR.toUserId IS NOT NULL
+                    , C.contactId, NULL)) AS r
+        , 'Lead to Enrolled' AS label
+        , 0 AS threshold
+        , 5 AS Ord
+    FROM Contacts C
+    LEFT JOIN ContactTypes CT ON CT.contactTypeId = C.contactTypeId
+    LEFT JOIN (SELECT DISTINCT U.toUserId FROM UserStatusRecords U
+                INNER JOIN ContactTypes T ON T.contactTypeId = U.status
+                WHERE T.typeName = '6. Enrolled Student'
+                AND DATE(U.updateDtTm) >= '[?From Date]' AND DATE(U.updateDtTm) <= '[?To Date]') USR
+        ON USR.toUserId = C.contactId
+
+    WHERE C.isActive = 1
+    AND SUBSTRING(CT.typeName, 1, 1) IN ('1', '2', '3', '4', '5', '6', '7', '8', '9')
+    )
+
 ) t1
 
 GROUP BY t1.Ord

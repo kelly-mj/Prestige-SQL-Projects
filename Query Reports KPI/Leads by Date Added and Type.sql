@@ -24,11 +24,18 @@ LEFT JOIN (SELECT U.toUserId, MAX(U.status) AS lastStatus, T.typeName, MAX(U.upd
     ON USR.toUserId = C.contactId
 
 WHERE (LOCATE('[?Type]', CT.typeName) <> 0 OR USR.toUserId IS NOT NULL)
-  AND IF('[?From Date]' <> '', DATE(C.creationDtTm) >= '[?From Date]', C.isActive = 1)
-  AND IF('[?To Date]' <> '', DATE(C.creationDtTm) >= '[?To Date]', C.isActive = 1)
+  AND IF( '[?From Date]' <> ''
+         , DATE(C.creationDtTm) >= '[?From Date]'
+            OR USR.lastUpdate >= '[?From Date]'
+            OR (DATE(C.lastUpdateDtTm) >= '[?From Date]' AND LOCATE('[?Type]', CT.typeName) <> 0)
+         , C.isActive = 1)
+  AND IF( '[?To Date]' <> ''
+         , DATE(C.creationDtTm) <= '[?To Date]'
+            OR USR.lastUpdate <= '[?To Date]'
+            OR (DATE(C.lastUpdateDtTm) <= '[?To Date]' AND LOCATE('[?Type]', CT.typeName) <> 0)
+         , C.isActive = 1 )
   AND C.isActive = 1
   AND SUBSTRING(CT.typeName, 1, 1) IN ('1', '2', '3', '4', '5', '6', '7', '8', '9')
-  AND CMP.isActive = 1
 
 ORDER BY CMP.campusName, CT.typeName, C.creationDtTm
 

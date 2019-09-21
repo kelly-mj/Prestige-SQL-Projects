@@ -17,7 +17,7 @@ FROM (
     , S.creationDtTm
     , S.lastUpdateDtTm
     , R.registrationId
-    , R.graduationDate
+    , COALESCE(R.graduationDate, P4.fieldValue) AS graduationDate
     , R.regStatus
     , P.programmeName
     , CONCAT(IF(P0.fieldValue IS NOT NULL, P0.fieldValue, '')
@@ -40,6 +40,8 @@ FROM (
         AND P2.fieldName = 'EMPLOYER_ADDRESS'
     LEFT JOIN ProfileFieldValues P3 ON P3.userId = S.studentId
         AND P3.fieldName = 'EMPLOYER_PHONE'
+    LEFT JOIN ProfileFieldValues P4 ON P4.userId = S.studentId
+        AND P4.fieldName = 'ACTUAL_GRADUATION_DATE'
 
     WHERE (S.isActive = 3 OR R.regStatus = 3)
       #AND S.<ADMINID>
